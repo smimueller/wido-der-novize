@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Wido der Novize – Ein Point-and-Click-Abenteuer im Jahr 802</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06051a; --deck:#0d0b30; --deck2:#151148; --line:#2f2a80;
+  --verb:#7b84f0; --verbA:#f2f0ff; --satz:#a8dcff; --gold:#e8b450;
+  --text:#efe6d2; --parch:#eadcb6; --ink:#3a2a18;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Pixelify Sans','Courier New',monospace;
+  display:flex; justify-content:center; align-items:flex-start;
+  padding:8px; -webkit-tap-highlight-color:transparent;
+}
+#wrap{width:100%; max-width:980px}
+#stage{position:relative; border:2px solid var(--line); background:#000; line-height:0}
+#game{display:block; width:100%; aspect-ratio:16/9; height:auto;
+  image-rendering:pixelated; image-rendering:crisp-edges; touch-action:manipulation; cursor:pointer}
+#narr{
+  position:absolute; top:6px; left:6px; max-width:86%; display:none;
+  background:rgba(6,5,20,.88); border:1px solid var(--line);
+  color:var(--text); font-size:16px; line-height:1.35; padding:6px 10px; pointer-events:none;
+}
+#loc{position:absolute; left:8px; bottom:5px; font-size:16px; color:#cfd6ff;
+  text-shadow:1px 1px 0 #000; pointer-events:none}
+#toast{
+  position:absolute; top:6px; right:6px; display:none; text-align:center;
+  background:var(--parch); color:var(--ink); border:2px solid #b89a5e;
+  box-shadow:2px 2px 0 #000; font-size:16px; padding:5px 10px; pointer-events:none;
+}
+#satz{
+  min-height:36px; display:flex; align-items:center; padding:5px 12px;
+  background:linear-gradient(var(--deck),var(--deck2));
+  border:2px solid var(--line); border-top:none;
+  color:var(--satz); font-size:18px;
+}
+#deck{display:flex; gap:6px; padding:6px; background:linear-gradient(var(--deck),var(--deck2));
+  border:2px solid var(--line); border-top:none}
+#verbs{display:grid; grid-template-columns:repeat(3,1fr); gap:4px; flex:1 1 auto}
+#verbs button, #btns button, .dlgOpt, .quizOpt, .menuBtn, .ovBtn{
+  font-family:inherit; font-size:16px; min-height:40px; padding:6px 8px;
+  background:#0d0b30; color:var(--verb); border:2px solid var(--line);
+  cursor:pointer; text-align:center;
+}
+#verbs button.sel{background:var(--line); color:var(--verbA)}
+#verbs button:active{background:#3a34a0}
+#inv{display:flex; gap:4px; flex:0 0 auto}
+.slot{
+  width:54px; height:54px; border:2px solid var(--line); cursor:pointer;
+  background:radial-gradient(circle at 50% 42%, #26206a, #141048);
+  display:flex; align-items:center; justify-content:center; position:relative;
+}
+.slot canvas{width:34px; height:34px; image-rendering:pixelated}
+.slot.sel{outline:2px solid var(--gold); outline-offset:-2px}
+.slot .nm{position:absolute; bottom:-1px; left:0; right:0; font-size:11px; color:#cfd6ff;
+  text-align:center; display:none; pointer-events:none; text-shadow:1px 1px 0 #000}
+#btns{display:flex; gap:6px; padding:0 6px 8px; background:var(--deck); border:2px solid var(--line);
+  border-top:none; flex-wrap:wrap}
+#btns button{flex:1 1 auto; color:var(--gold)}
+.ov{
+  position:fixed; inset:0; background:rgba(4,3,16,.93); z-index:20;
+  display:flex; align-items:center; justify-content:center; padding:12px;
+}
+.ov.hide{display:none}
+.panel{max-width:720px; width:100%; max-height:92vh; overflow:auto; padding:14px;
+  background:linear-gradient(var(--deck),var(--deck2)); border:2px solid var(--line)}
+.panel h1{font-size:26px; color:var(--gold); margin-bottom:8px}
+.panel h2{font-size:20px; color:var(--satz); margin:10px 0 6px}
+.panel p, .panel li{font-size:16px; line-height:1.45; color:var(--text)}
+.logo{
+  font-size:44px; line-height:1.05; text-align:center; margin:10px 0 4px;
+  background:linear-gradient(#fff6c8 0 34%, #f0b040 34% 67%, #b86a20 67% 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(2px 0 0 #2a1408) drop-shadow(0 2px 0 #2a1408);
+}
+.sub{text-align:center; color:var(--satz); font-size:16px; margin-bottom:12px}
+.menuBtn{display:block; width:100%; margin:6px 0; color:var(--text); font-size:18px}
+.menuBtn.done{color:var(--gold)}
+.menuBtn.locked{opacity:.45}
+.menuBtn small{color:var(--satz); font-size:14px}
+.parchCard{
+  background:var(--parch); color:var(--ink); border:3px solid #b89a5e;
+  box-shadow:3px 3px 0 #000, inset 0 0 0 2px #f7ecd0; padding:14px;
+}
+.parchCard h1{color:#6b4416; font-size:22px}
+.parchCard p{color:var(--ink); font-size:16px; line-height:1.45; margin-top:8px}
+.parchCard .tag{display:inline-block; background:#6b4416; color:#f7ecd0; font-size:13px;
+  padding:1px 6px; margin-bottom:6px}
+.ovBtn{display:block; width:100%; margin-top:8px; color:var(--text)}
+.dlgOpt{display:block; width:100%; margin-top:6px; text-align:left; color:var(--satz)}
+.dlgOpt:hover{background:#1c1860}
+#dlgWho{font-size:18px; margin-bottom:4px}
+#dlgText{font-family:'VT323','Courier New',monospace; font-size:22px; line-height:1.2; color:var(--text); min-height:52px}
+.quizQ{font-family:'VT323','Courier New',monospace; font-size:22px; color:var(--satz); margin:8px 0}
+.quizOpt{display:block; width:100%; margin-top:6px; text-align:left; color:var(--text)}
+.quizOpt.ok{background:#1d4a22; color:#c8f0c0; border-color:#3f8a44}
+.quizOpt.bad{background:#5a1d1d; color:#f0c8c0; border-color:#8a3f3f}
+.teacherSec{border-top:1px solid var(--line); margin-top:10px; padding-top:8px}
+.kartenGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; margin-top:8px}
+.karteBtn{font-family:inherit; font-size:15px; padding:8px 6px; background:var(--parch); color:var(--ink);
+  border:2px solid #b89a5e; cursor:pointer; min-height:44px}
+.karteBtn.new{outline:2px solid var(--gold)}
+@media (max-width:640px){
+  #deck{flex-direction:column}
+  #verbs{grid-template-columns:repeat(3,1fr)}
+  #inv{justify-content:space-between}
+  .slot{flex:1 1 0; max-width:64px}
+  .logo{font-size:32px}
+  #satz{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game" width="320" height="180"></canvas>
+    <div id="narr"></div>
+    <div id="toast"></div>
+    <div id="loc"></div>
+  </div>
+  <div id="satz">Wido der Novize – klicke ein Verb und dann ein Ding.</div>
+  <div id="deck">
+    <div id="verbs"></div>
+    <div id="inv"></div>
+  </div>
+  <div id="btns">
+    <button id="bHint">Hinweis</button>
+    <button id="bCards">Wissenskarten</button>
+    <button id="bSound">Ton: an</button>
+    <button id="bMenu">Hauptmenü</button>
+  </div>
+</div>
+
+<div class="ov" id="menu">
+  <div class="panel" style="text-align:left">
+    <div class="logo">Wido der Novize</div>
+    <div class="sub">Ein Point-and-Click-Abenteuer im Frankenreich, Jahr 802</div>
+    <div id="chList"></div>
+    <button class="menuBtn" id="bTeacher">Lehrerseite (Kapitel, Lösungen, Wissenskarten, Diskussionsfragen)</button>
+    <button class="menuBtn" id="bAllCards">Alle Wissenskarten</button>
+    <p style="margin-top:10px;font-size:14px;color:#9aa0e8">Steuerung: Wähle ein Verb (z. B. „Benutze“) und klicke dann zwei Dinge an. Tippen = Klicken. Es gibt keinen Tod und keine Zeit – der Hinweis-Knopf zeigt dir den nächsten Schritt.</p>
+  </div>
+</div>
+
+<div class="ov hide" id="cardsOv">
+  <div class="panel">
+    <h1>Wissenskarten</h1>
+    <div class="kartenGrid" id="kartenGrid"></div>
+    <button class="ovBtn" id="cardsClose">Zurück</button>
+  </div>
+</div>
+
+<div class="ov hide" id="cardOv">
+  <div class="parchCard" style="max-width:560px;width:100%">
+    <span class="tag" id="cardTag">Wissenskarte</span>
+    <h1 id="cardTitle"></h1>
+    <p id="cardText"></p>
+    <button class="ovBtn" id="cardClose" style="color:#3a2a18;border-color:#b89a5e;background:#d9c89e">Weiter</button>
+  </div>
+</div>
+
+<div class="ov hide" id="dlgOv">
+  <div class="panel" style="max-width:640px">
+    <div id="dlgWho"></div>
+    <div id="dlgText"></div>
+    <div id="dlgOpts"></div>
+  </div>
+</div>
+
+<div class="ov hide" id="quizOv">
+  <div class="panel" style="max-width:640px">
+    <h1 id="quizTitle">Quiz</h1>
+    <div class="quizQ" id="quizQ"></div>
+    <div id="quizOpts"></div>
+    <div id="quizInfo" style="margin-top:8px;font-size:16px;color:var(--gold)"></div>
+  </div>
+</div>
+
+<div class="ov hide" id="titleOv">
+  <div class="parchCard" style="max-width:520px;width:100%;text-align:center">
+    <span class="tag" id="titleTag">Kapitel</span>
+    <h1 id="titleH"></h1>
+    <p id="titleP" style="font-size:18px"></p>
+    <button class="ovBtn" id="titleBtn" style="color:#3a2a18;border-color:#b89a5e;background:#d9c89e">Los geht’s</button>
+  </div>
+</div>
+
+<div class="ov hide" id="endOv">
+  <div class="parchCard" style="max-width:600px;width:100%">
+    <span class="tag">Abschlusskarte</span>
+    <h1 id="endTitle"></h1>
+    <p id="endText"></p>
+    <p style="margin-top:10px"><b>Diskussionsfrage:</b> <span id="endDisk"></span></p>
+    <button class="ovBtn" id="endQuizBtn" style="color:#3a2a18;border-color:#b89a5e;background:#d9c89e">Zum Quiz</button>
+    <button class="ovBtn hide" id="endDoneBtn" style="color:#3a2a18;border-color:#b89a5e;background:#d9c89e">Kapitel abgeschlossen – zum Hauptmenü</button>
+  </div>
+</div>
+
+<div class="ov hide" id="teacherOv">
+  <div class="panel" id="teacherPanel"></div>
+</div>
+
+<script>
+"use strict";
+/* ================= 0. Utils ================= */
+const W=320, H=180;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const lerp=(a,b,t)=>a+(b-a)*t;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hx(c){return [parseInt(c.substr(1,2),16),parseInt(c.substr(3,2),16),parseInt(c.substr(5,2),16)];}
+function rgb(r,g,b){return 'rgb('+(r<0?0:r>255?255:r|0)+','+(g<0?0:g>255?255:g|0)+','+(b<0?0:b>255?255:b|0)+')';}
+function mix(c1,c2,t){const a=hx(c1),b=hx(c2);return rgb(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t);}
+function lumOf(r,g,b){return (r*0.3+g*0.59+b*0.11)/255;}
+
+/* ================= 1. Pixel-Helfer ================= */
+function R(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(x|0,y|0,Math.max(1,w|0),Math.max(1,h|0));}
+function px(g,x,y,c){g.fillStyle=c;g.fillRect(x|0,y|0,1,1);}
+function line(g,x0,y0,x1,y1,c){ /* Bresenham */
+  x0|=0;y0|=0;x1|=0;y1|=0;
+  const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;
+  let e=dx+dy;
+  for(;;){g.fillStyle=c;g.fillRect(x0,y0,1,1);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx;}if(e2<=dx){e+=dx;y0+=sy;}}
+}
+function disc(g,cx,cy,r,c){cx|=0;cy|=0;r|=0;for(let y=-r;y<=r;y++){const w=Math.floor(Math.sqrt(r*r-y*y));R(g,cx-w,cy+y,w*2+1,1,c);}}
+function ell(g,cx,cy,rx,ry,c){cx|=0;cy|=0;rx|=0;ry|=0;if(rx<1||ry<1){R(g,cx,cy,Math.max(1,rx*2),Math.max(1,ry*2),c);return;}
+  for(let y=-ry;y<=ry;y++){const t=1-(y*y)/(ry*ry);const w=Math.max(1,Math.floor(rx*Math.sqrt(Math.max(0,t))));R(g,cx-w,cy+y,w*2,1,c);}}
+function arch(g,x,y,w,h,c){ /* Rundbogen-Fläche, oben gerundet */
+  x|=0;y|=0;w|=0;h|=0;const top=Math.max(2,Math.floor(h*0.45));
+  for(let i=0;i<h;i++){let inset=0;if(i<top){const t=i/top;inset=Math.round((w/2)*(1-Math.sqrt(Math.max(0,1-t*t))));}
+    R(g,x+inset,y+i,w-2*inset,1,c);}
+}
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function dith(g,x,y,w,h,c1,c2,t){ /* 4x4-Bayer-Dither */
+  x|=0;y|=0;w|=0;h|=0;
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){const v=BAYER[((y+j)&3)*4+((x+i)&3)]/16;px(g,x+i,y+j,v<t?c1:c2);}
+}
+function sky(g,x,y,w,h,stops){ /* Farbbänder mit Dither-Kante */
+  x|=0;y|=0;w|=0;h|=0;let yy=y;
+  for(let i=0;i<stops.length;i++){
+    const c=stops[i][0], hh=(i===stops.length-1)?(y+h-yy):stops[i][1];
+    R(g,x,yy,w,Math.max(1,hh),c);
+    if(i<stops.length-1){dith(g,x,yy+hh-1,w,1,c,stops[i+1][0],0.5);dith(g,x,yy+hh,w,1,stops[i+1][0],c,0.5);}
+    yy+=hh;
+  }
+}
+function cloud(g,cx,cy,s,c){ /* s = Skala */
+  ell(g,cx,cy,10*s,4*s,c);ell(g,cx-7*s,cy+1*s,6*s,3*s,c);ell(g,cx+7*s,cy+1*s,7*s,3*s,c);
+  ell(g,cx-2*s,cy-2*s,6*s,3*s,c);
+}
+function hills(g,x,y,w,hBase,c1,c2,rng){ /* zwei überlagerte Sinuswellen */
+  for(let i=0;i<w;i++){
+    const t=i/w;
+    const y1=y-Math.round((Math.sin(t*6.3+1.2)*0.5+0.5)*hBase*0.6+(Math.sin(t*13.7)*0.5+0.5)*hBase*0.25);
+    for(let yy=y1;yy<H;yy++)px(g,x+i,yy,c1);
+  }
+  for(let i=0;i<w;i++){
+    const t=i/w;
+    const y2=y+6-Math.round((Math.sin(t*5.1+3.0)*0.5+0.5)*hBase*0.45+(Math.sin(t*11.3+0.7)*0.5+0.5)*hBase*0.2);
+    for(let yy=y2;yy<H;yy++)px(g,x+i,yy,c2);
+  }
+}
+function grass(g,x,y,w,h,rng,c1,c2){ /* Wiese mit Grashalmen in 2 Grüntönen */
+  R(g,x,y,w,h,c1);
+  for(let i=0;i<w*2;i++){const gx=x+Math.floor(rng()*w);const gh=1+Math.floor(rng()*3);
+    R(g,gx,y-gh+ (rng()<0.3?1:0),1,gh,rng()<0.5?c2:c1);}
+}
+function path(g,x0,y0,x1,y1,wTop,wBot,c,rng){ /* Weg mit Perspektive zum Fluchtpunkt */
+  for(let yy=y1;yy>=y0;yy--){const t=(yy-y0)/Math.max(1,(y1-y0));const cxp=lerp(x1,x0,t);const wp=lerp(wTop,wBot,t);
+    R(g,Math.round(cxp-wp/2),yy,Math.max(2,Math.round(wp)),1,c);}
+  for(let i=0;i<wBot*1.4;i++){const t=rng();const yy=Math.round(lerp(y0,y1,t));const wp=lerp(wTop,wBot,t);
+    const gx=Math.round(lerp(x1,x0,t)+(rng()-0.5)*wp);px(g,gx,yy,rng()<0.5?mix(c,'#000000',0.15):mix(c,'#ffffff',0.12));}
+}
+function thatch(g,x,y,w,h,c,rng){ /* Strohdach */
+  R(g,x,y,w,h,c);
+  for(let yy=0;yy<h;yy+=2){const off=(yy/2)%2;
+    for(let xx=off;xx<w;xx+=3){const len=2+Math.floor(rng()*4);
+      R(g,x+xx,y+yy,Math.min(len,w-xx),1,mix(c,'#000000',0.08+rng()*0.18));}}
+  for(let i=0;i<w;i+=2){R(g,x+i,y+h-2,1,2,mix(c,'#000000',0.25));}
+}
+function daubWall(g,x,y,w,h,wood,daub,rng){ /* Fachwerk mit Lehm */
+  R(g,x,y,w,h,daub);
+  for(let i=0;i<w*h/28;i++){px(g,x+Math.floor(rng()*w),y+Math.floor(rng()*h),mix(daub,'#000000',0.06+rng()*0.08));}
+  const step=22+Math.floor(rng()*6);
+  R(g,x,y,w,3,wood);R(g,x,y+h-3,w,3,wood);
+  for(let xx=x;xx<=x+w;xx+=step)R(g,xx,y,3,h,wood);
+  for(let yy=y+8;yy<y+h-3;yy+=16){R(g,x,yy,w,2,wood);
+    const x0=x+((yy/step)|0)*step;line(g,x0,yy,x0+10,yy+14,wood);}
+}
+function stones(g,x,y,w,h,mortar,base,rng){ /* versetztes Quadermauerwerk, 8%-Lichtkante oben */
+  R(g,x,y,w,h,mortar);
+  let yy=y;let row=0;
+  while(yy<y+h){const bh=5+Math.floor(rng()*3);let xx=x-((row%2)*7);
+    while(xx<x+w){const bw=11+Math.floor(rng()*9);
+      const c=mix(base,'#ffffff',rng()*0.10);
+      R(g,xx,yy,Math.min(bw,w-(xx-x)),bh,c);
+      R(g,xx,yy,Math.min(bw,w-(xx-x)),1,mix(c,'#ffffff',0.08)); /* Lichtkante */
+      if(rng()<0.16){const cx=xx+2+Math.floor(rng()*Math.max(1,bw-4));line(g,cx,yy+1,cx+(rng()<0.5?1:0),yy+bh-1,mix(c,'#000000',0.3));}
+      xx+=bw+1;}
+    yy+=bh+1;row++;
+  }
+}
+function planks(g,x,y,w,h,c,rng){ /* Holzbohlen mit Maserung */
+  R(g,x,y,w,h,c);
+  for(let xx=x;xx<x+w;xx+=6){R(g,xx,y,1,h,mix(c,'#000000',0.28));
+    for(let i=0;i<3;i++){const gy=y+Math.floor(rng()*h);R(g,xx+1+Math.floor(rng()*4),gy,1,2+Math.floor(rng()*3),mix(c,'#000000',0.12));}}
+  R(g,x,y,w,1,mix(c,'#ffffff',0.10));
+}
+function tiles(g,x,y,w,h,vanX,rng,c1,c2){ /* Fliesen-/Plattenboden mit Fugen zum Fluchtpunkt */ floorBoards(g,x,y,w,h,vanX,rng,c1,c2); }
+function floorBoards(g,x,y,w,h,vanX,rng,c1,c2){ /* Dielenboden mit Fugen zum Fluchtpunkt */
+  R(g,x,y,w,h,c1);
+  for(let yy=y;yy<y+h;yy+=4)R(g,x,yy,w,1,mix(c1,'#000000',0.22));
+  for(let i=-6;i<=6;i++){line(g,vanX+i*3,y,vanX+i*22,y+h,mix(c1,'#000000',0.30));}
+  for(let i=0;i<w;i+=2){if(rng()<0.5)px(g,x+Math.floor(rng()*w),y+Math.floor(rng()*h),c2);}
+}
+
+/* ================= 2. Licht/Farbkorrektur ================= */
+const PROFILES={
+  indoor:{sh:'#251a40',li:'#ffdcae',s:0.24,sat:1.18},
+  sunny:{sh:'#26244e',li:'#fff0c4',s:0.20,sat:1.22},
+  north:{sh:'#1e2c48',li:'#f4f0e4',s:0.22,sat:1.08},
+  gold:{sh:'#2a1838',li:'#ffd890',s:0.26,sat:1.20}
+};
+function gradeCanvas(cnv,prof,vg){
+  const g=cnv.getContext('2d');
+  const img=g.getImageData(0,0,cnv.width,cnv.height),d=img.data;
+  const sh=hx(prof.sh),li=hx(prof.li),s=prof.s,sat=prof.sat;
+  const cx=cnv.width/2,cy=cnv.height*0.55,maxD=Math.hypot(cx,cy);
+  for(let y=0;y<cnv.height;y++)for(let x=0;x<cnv.width;x++){
+    const i=(y*cnv.width+x)*4;let r=d[i],gg=d[i+1],b=d[i+2];
+    const L=lumOf(r,gg,b);
+    const pull=s*(L<0.5?(0.5-L)*2:(L-0.5)*2);
+    if(L<0.5){r+=(sh[0]-r)*pull;gg+=(sh[1]-gg)*pull;b+=(sh[2]-b)*pull;}
+    else{r+=(li[0]-r)*pull;gg+=(li[1]-gg)*pull;b+=(li[2]-b)*pull;}
+    const gray=lumOf(r,gg,b);
+    r=gray+(r-gray)*sat;gg=gray+(gg-gray)*sat;b=gray+(b-gray)*sat;
+    const dist=Math.hypot(x-cx,y-cy)/maxD;
+    const v=Math.max(0,(dist-0.55)/0.45);
+    const dk=1-vg*Math.min(1,v);
+    d[i]=clamp(r*dk,0,255);d[i+1]=clamp(gg*dk,0,255);d[i+2]=clamp(b*dk,0,255);
+  }
+  g.putImageData(img,0,0);
+}
+/* Figur-Schattierung: Licht +16%, Schatten 72% leicht blau, Tiefe 80% vom Schatten */
+function shades(c){
+  const a=hx(c),r=a[0],g=a[1],b=a[2];
+  return {
+    li:rgb(r+(255-r)*0.16,g+(255-g)*0.16,b+(255-b)*0.16),
+    base:c,
+    sh:rgb(r*0.72,g*0.72,Math.min(255,b*0.72+12)),
+    dp:rgb(r*0.58,g*0.60,Math.min(255,b*0.60+9))
+  };
+}
+/* ================= 3. Figuren ================= */
+const OUTLINE='#1b1424';
+const WALK=[ /* 6-Frame-Laufzyklus: Bein vorne/hinten, Kopfwippen, Armschwung */
+  {lf:0, rf:0,  bob:0, arm:0},
+  {lf:2, rf:-2, bob:1, arm:2},
+  {lf:3, rf:-3, bob:0, arm:3},
+  {lf:1, rf:-1, bob:1, arm:1},
+  {lf:-2,rf:2,  bob:0, arm:-2},
+  {lf:-3,rf:3,  bob:0, arm:-3}
+];
+/* style: skin,hair,robe,robeD,belt,shoe,hose,long,hs,beard,mus,brow,cheek,apron,cloak,buckle,rope,cap,spear,tall */
+function figCanvas(st,face,frame,gesture){
+  const key=st.key+'|'+face+'|'+frame+'|'+gesture;
+  if(figCache[key])return figCache[key];
+  const cnv=document.createElement('canvas');cnv.width=44;cnv.height=52;
+  const g=cnv.getContext('2d');
+  const s=shades(st.robe), sD=shades(st.robeD||st.robe), skin=shades(st.skin), hair=shades(st.hair||'#333333');
+  const sc=st.tall?1.14:1;
+  g.save();g.translate(22,50);g.scale(face*sc,sc);g.translate(-22,-50);
+  const w=(frame<0)?WALK[0]:WALK[frame%6];
+  const bob=(frame<0)?0:w.bob, arm=w.arm;
+  const footY=50;
+  const legTop=34-bob;
+  /* ferner Arm (dunkel, hinten) */
+  R(g,22-9,16+bob,3,12,sD.sh);
+  /* Beine (nur bei kurzer Tunika) */
+  if(!st.long){
+    const hose=shades(st.hose||'#5a4632');
+    R(g,22-7+w.rf,legTop,4,footY-2-legTop,hose.base);
+    R(g,22-6+w.rf,legTop,1,footY-2-legTop,hose.dp);
+    R(g,22+2+w.lf,legTop,4,footY-2-legTop,hose.base);
+    R(g,22+5+w.lf,legTop,1,footY-2-legTop,hose.sh);
+    R(g,22-8+w.rf,footY-2,5,2,st.shoe); /* Schuh hinten */
+    R(g,22+1+w.lf,footY-2,6,2,st.shoe); /* Schuh vorne */
+  }
+  /* Gewand: Trapez von Schulter zu Saum */
+  const topY=13+bob, botY=st.long?footY-1:legTop+2;
+  const topW=8, botW=st.long?12:10;
+  for(let yy=topY;yy<botY;yy++){
+    const t=(yy-topY)/Math.max(1,botY-topY);
+    const half=Math.round(lerp(topW,botW,t));
+    R(g,22-half,yy,half*2,1,s.base);
+    if(yy>topY+1){
+      R(g,22-half,yy,1,1,s.li);                    /* Lichtkante links */
+      R(g,22+half-1,yy,1,1,s.sh);                   /* Schattenkante rechts */
+      R(g,22-4,yy,1,1,s.sh); R(g,22+3,yy,1,1,s.dp);  /* Faltenlinien */
+    }
+  }
+  /* Umhang */
+  if(st.cloak){const cl=shades(st.cloak);
+    for(let yy=topY;yy<botY;yy++){const t=(yy-topY)/Math.max(1,botY-topY);const half=Math.round(lerp(topW,botW,t))+1;
+      R(g,22-half-1,yy,2,1,cl.base);R(g,22+half-1,yy,1,1,cl.sh);}
+    R(g,22-3,topY,6,3,cl.sh);}
+  /* Schürze */
+  if(st.apron){const ap=shades(st.apron);R(g,22-4,topY+8,8,botY-topY-9,ap.base);R(g,22-4,topY+8,8,1,ap.li);R(g,22+3,topY+9,1,botY-topY-10,ap.sh);}
+  /* Kordel / Gürtel */
+  if(st.belt){const b=shades(st.belt);R(g,22-topW,26+bob,topW*2,2,b.base);R(g,22-topW,26+bob,topW*2,1,b.li);
+    if(st.buckle)R(g,22-1,26+bob,2,2,st.buckle);}
+  if(st.rope){R(g,22-topW+1,27+bob,topW*2-2,1,mix(st.rope,'#ffffff',0.2));}
+  /* naher Arm mit Schwung / Geste */
+  if(gesture){ /* Hand erhoben */
+    R(g,22+6,8+bob,3,9,s.base);R(g,22+6,7+bob,3,2,skin.base);
+    R(g,22+7,6+bob,2,2,skin.li);
+  }else{
+    const ax=22+5+arm;
+    R(g,ax,15+bob,3,13,s.base);R(g,ax,15+bob,1,13,s.li);
+    R(g,ax,27+bob,3,3,skin.base);R(g,ax+1,28+bob,2,1,skin.sh);
+  }
+  /* Kopf */
+  const hy=3+bob;
+  if(st.hs==='long'){R(g,22-5,hy+1,10,10,hair.base);R(g,22-5,hy+1,1,10,hair.li);R(g,22+4,hy+1,1,10,hair.sh);}
+  R(g,22-1,hy+8,3,3,st.skin); /* Hals */
+  R(g,22-4,hy+1,9,9,skin.base);           /* Schädel */
+  R(g,22-4,hy+1,9,1,skin.li);
+  R(g,22+4,hy+2,1,7,skin.sh);             /* rechte Schattenkante */
+  /* Frisur / Kopfbedeckung */
+  if(st.hs==='tonsure'){R(g,22-4,hy,9,2,hair.base);R(g,22-4,hy,1,5,hair.base);R(g,22+3,hy,2,5,hair.base);R(g,22-4,hy,9,1,hair.li);R(g,22-1,hy+1,3,2,st.skin);R(g,22-1,hy+1,3,1,skin.li);}
+  else if(st.hs==='full'){R(g,22-4,hy,9,3,hair.base);R(g,22-4,hy+3,2,4,hair.base);R(g,22+3,hy+3,2,4,hair.base);R(g,22-4,hy,9,1,hair.li);}
+  else if(st.hs==='short'){R(g,22-4,hy,9,2,hair.base);R(g,22-4,hy+2,2,2,hair.base);R(g,22+3,hy+2,2,2,hair.base);R(g,22-4,hy,9,1,hair.li);}
+  else if(st.hs==='scarf'){const sc2=shades(st.scarf||'#c8c0b0');
+    R(g,22-5,hy-1,11,11,sc2.base);R(g,22-2,hy+3,6,7,st.skin);
+    R(g,22-5,hy+4,11,2,sc2.sh);R(g,22-5,hy-1,11,1,sc2.li);R(g,22-2,hy+3,1,7,st.skin);}
+  if(st.cap==='wrap'){const cp=shades(st.capCol||'#8a6a3a');
+    R(g,22-5,hy-2,11,4,cp.base);R(g,22-5,hy+1,11,2,cp.sh);R(g,22-5,hy-2,11,1,cp.li);R(g,22+2,hy-3,3,2,cp.base);}
+  else if(st.cap==='helm'){const hm=shades('#9aa0ac');
+    for(let i=0;i<5;i++){const iw=Math.round(9*(1-i/6));R(g,22-iw/2,hy-2+i,iw+1,1,hm.base);}
+    R(g,22-1,hy+1,2,5,hm.sh);R(g,22-5,hy-2,11,1,hm.li);}
+  else if(st.cap==='coif'){const cf=shades('#7a7f8c');R(g,22-4,hy,9,3,cf.base);R(g,22-4,hy+3,2,5,cf.base);R(g,22+3,hy+3,2,5,cf.base);}
+  else if(st.cap==='cone'){const cc=shades(st.capCol||'#b03a2e');
+    for(let i=0;i<6;i++){const iw=Math.round((6-i)*1.4);R(g,22-iw/2,hy-2-i,iw+1,1,cc.base);}
+    R(g,22-5,hy-1,11,2,cc.sh);}
+  /* Bart / Schnurrbart */
+  if(st.beard){const bd=shades(st.beardCol||st.hair||'#888888');R(g,22-4,hy+6,9,4,bd.base);R(g,22-4,hy+6,9,1,bd.li);R(g,22+4,hy+6,1,4,bd.sh);}
+  if(st.mus){R(g,22+1,hy+7,4,1,st.mus);}
+  /* Speer */
+  if(st.spear){line(g,22+9,6+bob,22+9,footY-2,st.spearShaft||'#7a5a34');disc(g,22+9,6+bob,1,st.spearTip||'#c8ccd4');}
+  g.restore();
+  /* 1px-Außenkontur in #1b1424: transparente Pixel mit opaque-Nachbar */
+  const img=g.getImageData(0,0,cnv.width,cnv.height),d=img.data;
+  const W2=cnv.width,H2=cnv.height;
+  const out=new Uint8ClampedArray(d.length);
+  for(let y=0;y<H2;y++)for(let x=0;x<W2;x++){
+    const i=(y*W2+x)*4;
+    if(d[i+3]>0){out[i]=d[i];out[i+1]=d[i+1];out[i+2]=d[i+2];out[i+3]=d[i+3];continue;}
+    let edge=false;
+    if(x>0&&d[i-4+3]>0)edge=true;else if(x<W2-1&&d[i+4+3]>0)edge=true;
+    else if(y>0&&d[i-W2*4+3]>0)edge=true;else if(y<H2-1&&d[i+W2*4+3]>0)edge=true;
+    if(edge){out[i]=27;out[i+1]=20;out[i+2]=36;out[i+3]=255;}
+  }
+  const im=g.createImageData(cnv.width,cnv.height);im.data.set(out);g.putImageData(im,0,0);
+  figCache[key]=cnv;return cnv;
+}
+const figCache={};
+/* Augen + Mund werden pro Frame als Overlay gezeichnet (Blinzeln/Mund im Takt) */
+function drawFaceBits(g,x,y,face,st,mouth,blink,bob){
+  const hy=3+bob;
+  if(blink){R(g,x+(face>0?24:19),y+hy+4,2,1,st.skin);}
+  else{R(g,x+(face>0?24:19),y+hy+4,1,1,OUTLINE);if(st.brow)R(g,x+(face>0?24:19),y+hy+3,2,1,st.brow);}
+  if(!st.beard){R(g,x+(face>0?26:20),y+hy+6,1,1,shades(st.skin).sh);} /* Nase */
+  if(st.cheek)R(g,x+(face>0?24:20),y+hy+6,1,1,st.cheek);
+  if(mouth)R(g,x+(face>0?23:19),y+hy+8,3,2,'#5a2430');
+  else R(g,x+(face>0?23:20),y+hy+8,3,1,'#6a3038');
+}
+/* ---------- Tiere ---------- */
+function drawHen(g,x,y,t,rng){
+  const peck=(Math.floor(t/0.7)%3===2);
+  const by=peck?2:0;
+  R(g,x-5,y-6+by,10,5,'#e8e4da');                 /* Körper */
+  R(g,x-5,y-6+by,10,1,'#f4f0e6');
+  R(g,x+3,y-9+by,5,5,'#e8e4da');                   /* Kopf */
+  R(g,x+7,y-8+by,3,2,'#d8a020');                   /* Kamm */
+  R(g,x+7,y-5+by,2,2,'#c07818');                   /* Schnabel */
+  px(g,x+5,y-8+by,OUTLINE);                        /* Auge */
+  R(g,x-7,y-5+by,3,3,'#d8d4c8');                   /* Schwanz */
+  R(g,x-2,y-1,2,1,'#c07818');R(g,x+2,y-1,2,1,'#c07818');
+  R(g,x-6,y-7+by,11,1,OUTLINE);R(g,x-6,y-1,11,1,OUTLINE);
+  R(g,x-6,y-6+by,1,6,OUTLINE);R(g,x+4,y-6+by,1,6,OUTLINE);
+}
+function drawGoat(g,x,y,t){
+  const chew=(Math.floor(t/0.5)%2===0);
+  const c='#b8a888',cd='#8a7a5e';
+  R(g,x-9,y-10,18,9,c);R(g,x-9,y-10,18,1,mix(c,'#ffffff',0.15));
+  R(g,x+7,y-14,7,6,c);                              /* Kopf */
+  R(g,x+7,y-14,2,1,cd);R(g,x+12,y-12,2,2,'#e8e0cc');/* Horn */
+  px(g,x+10,y-12,OUTLINE);
+  R(g,x+12,y-9+(chew?1:0),3,2,cd);                  /* Kinnbart/kaubewegung */
+  R(g,x-7,y-1,2,1,'#6a5a42');R(g,x+5,y-1,2,1,'#6a5a42');
+  R(g,x-10,y-11,19,1,OUTLINE);R(g,x-10,y-1,19,1,OUTLINE);
+  R(g,x-10,y-10,1,9,OUTLINE);R(g,x+8,y-10,1,9,OUTLINE);
+  R(g,x-2,y-4,3,3,mix(c,'#ffffff',0.2));
+}
+function drawElephant(g,x,y,t,holdScroll){
+  const c='#8f8f9c',cd='#6f6f80',cl='#a8a8b4';
+  const sway=Math.sin(t*1.4)*1;
+  R(g,x-26,y-24,52,20,c);                            /* Körper */
+  R(g,x-26,y-24,52,2,cl);
+  R(g,x-26,y-4,52,2,cd);
+  R(g,x-22,y-4,5,4,cd);R(g,x+17,y-4,5,4,cd);         /* Beine */
+  R(g,x-4,y-4,5,4,cd);R(g,x+8,y-4,5,4,cd);
+  ell(g,x+24,y-22,10,9,c);R(g,x+24,y-22,10,9,cl);     /* Kopf */
+  ell(g,x+14,y-20,6,8,cd);                           /* Ohr als Fläche */
+  R(g,x+14,y-20,2,8,cl);
+  px(g,x+27,y-24,OUTLINE);                           /* Auge */
+  R(g,x+31,y-19,2,3,'#e8e0cc');                      /* Stoßzahn */
+  /* Rüssel aus 10 Gliedern, schwingt sanft */
+  let rx=x+30,ry=y-16;
+  for(let i=0;i<10;i++){const a=0.5+Math.sin(t*1.8+i*0.55)*0.25;rx+=Math.round(Math.cos(a)*2);ry+=Math.round(Math.sin(a)*2+1);
+    R(g,rx-1,ry-1,3,3,i%2?c:cd);}
+  if(holdScroll){R(g,rx-3,ry-6,8,3,'#eadcb6');R(g,rx-3,ry-6,8,1,'#c9b586');R(g,rx-3,ry-3,8,1,OUTLINE);}
+  /* Satteldecke rot mit Goldborte */
+  R(g,x-14,y-28,28,8,'#a03028');R(g,x-14,y-28,28,1,'#e8b450');R(g,x-14,y-21,28,1,'#e8b450');
+  R(g,x-14,y-28,1,8,'#7a2018');R(g,x+13,y-28,1,8,'#7a2018');
+  R(g,x-27,y-25,55,1,OUTLINE);R(g,x-27,y-3,55,1,OUTLINE);
+  R(g,x-27,y-24,1,21,OUTLINE);R(g,x+27,y-24,1,21,OUTLINE);
+}
+/* ---------- Sprechtext über dem Kopf ---------- */
+function drawSpeech(g,x,y,text,col){
+  g.font='8px "VT323","Courier New",monospace';g.textBaseline='top';
+  const words=text.split(' ');const lines=[];let cur='';
+  for(const wd of words){const test=cur?cur+' '+wd:wd;
+    if(g.measureText(test).width>108&&cur){lines.push(cur);cur=wd;}else cur=test;}
+  if(cur)lines.push(cur);
+  let ty=y-lines.length*9-2;
+  for(const ln of lines){
+    const w=g.measureText(ln).width;const tx=clamp(Math.round(x-w/2),2,W-2-w);
+    for(const [ox,oy] of [[-2,0],[2,0],[0,-2],[0,2],[-2,-2],[2,-2],[-2,2],[2,2],[1,0],[-1,0],[0,1],[0,-1]])
+      {g.fillStyle='#000000';g.fillText(ln,tx+ox,ty+oy);}
+    g.fillStyle=col;g.fillText(ln,tx,ty);
+    ty+=9;
+  }
+}
+/* ================= 4. Kulissen ================= */
+function archWindow(g,x,y,w,h,rng){ /* Rundbogenfenster mit Himmel + Wiese */
+  arch(g,x-2,y-2,w+4,h+2,'#3a3348');
+  arch(g,x,y,w,h,'#a8d8f0');
+  const horizon=y+h*0.62;
+  R(g,x,horizon,w,h-horizon+2,'#7ab058');
+  dith(g,x,horizon-1,w,1,'#a8d8f0','#7ab058',0.5);
+  ell(g,x+w*0.7,y+h*0.2,3,2,'#fff8e0');
+  R(g,x,y+h-3,w,3,'#5a8a42');
+  for(let i=0;i<w;i+=3)line(g,x+i,y,x+i,y+h,'#3a3348');
+  line(g,x+w/2,y,x+w/2,y+h,'#3a3348');
+}
+function houseDaub(g,x,y,w,h,rng,roofC){ /* Fachwerkhaus mit Strohdach */
+  daubWall(g,x,y,w,h,'#4a3826','#c8b394',rng);
+  R(g,x-4,y-10,w+8,12,roofC);
+  thatch(g,x-4,y-10,w+8,12,roofC,rng);
+  R(g,x+w/2-5,y+h-22,10,22,'#5a4028');R(g,x+w/2-5,y+h-22,10,1,'#7a5c3a');
+  R(g,x+8,y+h-16,9,9,'#3a2c1c');R(g,x+8,y+h-16,9,1,'#c8b394');
+  line(g,x+12,y+h-16,x+12,y+h-7,'#c8b394');line(g,x+8,y+h-12,x+17,y+h-12,'#c8b394');
+}
+function shelfBooks(g,x,y,w,h,rng){ /* Bücherregal, Rücken in 7 Farben mit Goldschnitt */
+  planks(g,x,y,w,h,'#5a4028',rng);
+  const cols=['#8a2a2a','#2a5a8a','#3a7a3a','#8a7a2a','#6a3a7a','#a05a2a','#3a6a6a'];
+  for(let s=0;s<3;s++){const sy=y+6+s*((h-10)/3);
+    R(g,x+3,sy,w-6,2,'#3a2c1c');
+    let bx=x+4;
+    while(bx<x+w-6){const bw=3+Math.floor(rng()*3);
+      const c=cols[Math.floor(rng()*7)];
+      R(g,bx,sy-8,bw,8,c);R(g,bx,sy-8,bw,1,mix(c,'#ffffff',0.2));R(g,bx,sy-3,bw,1,'#e8b450'); /* Goldschnitt */
+      bx+=bw+1;}}
+}
+function desk(g,x,y,w,rng){ /* Schreibpult */
+  R(g,x,y,w,4,'#6a4c2c');R(g,x,y,w,1,'#8a6a42');
+  R(g,x+2,y+4,3,h0(40)-y);R(g,x+w-5,y+4,3,40);
+  R(g,x+2,y+4,w-4,2,'#4a3520');
+}
+function h0(v){return v;}
+function waage(g,x,y){ /* Waage */
+  R(g,x-1,y-16,2,18,'#3a3348');R(g,x-9,y-16,18,2,'#3a3348');
+  line(g,x-8,y-14,x-11,y-6,'#3a3348');line(g,x+8,y-14,x+11,y-6,'#3a3348');
+  R(g,x-13,y-6,5,3,'#c8ccd4');R(g,x+8,y-6,5,3,'#c8ccd4');
+  R(g,x-2,y+2,4,2,'#3a3348');
+}
+const PAINT={
+/* ---------- 1. Skriptorium ---------- */
+skriptorium:{prof:'indoor',vg:0.30,floor:128,foot:166,minX:36,maxX:284,parts:'dust',
+ paint(g,rng){
+  stones(g,0,0,W,128,'#4a4458','#6a7086',rng);
+  archWindow(g,208,14,52,74,rng);
+  /* Lichtkegel vom Fenster auf den Boden */
+  const lg=g.createLinearGradient?null:null;
+  g.fillStyle='rgba(255,230,170,0.10)';
+  g.beginPath();g.moveTo(212,60);g.lineTo(258,60);g.lineTo(292,168);g.lineTo(190,168);g.closePath();g.fill();
+  dith(g,196,120,100,10,'rgba(255,230,170,0)', 'rgba(255,230,170,0.12)',0.5);
+  shelfBooks(g,10,16,74,86,rng);
+  /* Schreibpult mit Gerät */
+  desk(g,150,96,70,rng);
+  R(g,160,92,10,4,'#eadcb6');R(g,160,92,10,1,'#c9b586');          /* Pergament */
+  R(g,178,90,4,6,'#1b1424');R(g,178,90,2,2,'#e8b450');             /* Tintenfass */
+  R(g,190,91,9,2,'#7a4a22');R(g,196,89,5,2,'#e8e8e8');             /* Feder + Schabeisen */
+  /* Kerze */
+  R(g,120,88,3,8,'#e8e0c8');disc(g,121,86,2,'#ffd870');disc(g,121,86,1,'#fff4c8');
+  floorBoards(g,0,128,W,52,160,rng,'#6a5138','#7a6244');
+  /* Lichtpool auf dem Boden */
+  ell(g,238,150,34,7,'rgba(255,220,160,0.14)');
+ }},
+/* ---------- 2. Königshof ---------- */
+koenigshof:{prof:'sunny',vg:0.15,floor:120,foot:168,minX:26,maxX:294,parts:'birds',
+ paint(g,rng){
+  sky(g,0,0,W,120,[['#7ec8f0',46],['#a8dcf0',30],['#d8ecf0',26],['#f0e8c8',18]]);
+  disc(g,272,22,9,'#ffedb0');disc(g,272,22,6,'#fff8d8');
+  cloud(g,60,26,1,'#f4f8fc');cloud(g,150,16,1,'#eef4fa');cloud(g,230,40,1,'#f4f8fc');
+  hills(g,0,86,W,26,'#8ab868','#6a9a4e',rng);
+  grass(g,0,104,W,76,rng,'#7ab058','#5e9444');
+  houseDaub(g,18,44,66,62,rng,'#b89a4e');
+  houseDaub(g,238,50,64,58,rng,'#c2a558');
+  /* Palisade / Zaun */
+  for(let x=96;x<224;x+=12){R(g,x,96,3,26,'#7a5c38');R(g,x,96,3,2,'#9a7a4c');}
+  R(g,94,102,132,3,'#8a6a44');R(g,94,114,132,3,'#8a6a44');
+  path(g,150,120,160,180,10,64,'#c8b088',rng);
+  /* Kisten und Fass */
+  planks(g,108,124,20,14,'#8a6a44',rng);planks(g,132,128,16,10,'#7a5c38',rng);
+  R(g,206,122,16,18,'#8a6a44');R(g,206,122,16,2,'#a8895c');ell(g,214,122,8,3,'#6a5138');
+  /* Bank */
+  R(g,250,128,34,4,'#8a6a44');R(g,252,132,3,10,'#6a5138');R(g,280,132,3,10,'#6a5138');
+ }},
+/* ---------- 3. Gislas Hufe ---------- */
+gislasHufe:{prof:'sunny',vg:0.16,floor:122,foot:168,minX:24,maxX:296,parts:'butterflies',
+ paint(g,rng){
+  sky(g,0,0,W,122,[['#82ccf2',50],['#b0e0f2',30],['#e2f0e8',24],['#f4ecc8',18]]);
+  disc(g,44,20,8,'#ffedb0');
+  cloud(g,120,24,1,'#f6fafc');cloud(g,220,38,1,'#eef4fa');
+  hills(g,0,88,W,24,'#8ab868','#6a9a4e',rng);
+  grass(g,0,106,W,74,rng,'#7ab058','#5e9444');
+  houseDaub(g,180,50,92,64,rng,'#c2a558');
+  R(g,214,88,16,26,'#5a4028');R(g,214,88,16,2,'#7a5c3a');
+  R(g,192,66,12,12,'#3a2c1c');line(g,198,66,198,78,'#c8b394');line(g,192,72,204,72,'#c8b394');
+  /* Gartenbeete */
+  for(let b=0;b<3;b++){const bx=24+b*46;
+    R(g,bx,128,38,10,'#6a4c30');
+    for(let i=0;i<38;i+=4){R(g,bx+i,126,3,3,['#5e9444','#4e7a3a','#6aa04e'][Math.floor(rng()*3)]);}
+    dith(g,bx,137,38,2,'#6a4c30','#54401f',0.5);}
+  /* Zaun */
+  for(let x=20;x<160;x+=14){R(g,x,112,3,18,'#8a6a44');R(g,x,112,3,2,'#a8895c');}
+  R(g,18,118,144,3,'#9a7a4c');
+  path(g,150,122,160,180,12,58,'#c8b088',rng);
+  /* Blumen */
+  for(let i=0;i<14;i++){const fx=8+Math.floor(rng()*300),fy=118+Math.floor(rng()*56);
+    if(fx>160&&fy>122)continue;
+    R(g,fx,fy-2,1,3,'#4e7a3a');px(g,fx,fy-3,['#e86a8a','#e8d050','#c87ae8','#f0f0f0'][Math.floor(rng()*4)]);}
+ }},
+/* ---------- 4. Pfalz Aachen ---------- */
+pfalzAachen:{prof:'sunny',vg:0.15,floor:124,foot:168,minX:24,maxX:296,parts:'birds',
+ paint(g,rng){
+  sky(g,0,0,W,124,[['#8ad0f2',52],['#b8e2f4',30],['#e8f2e0',24],['#f4ecc8',18]]);
+  disc(g,52,18,9,'#ffedb0');
+  cloud(g,140,22,1,'#f6fafc');cloud(g,250,36,1,'#eef4fa');
+  hills(g,0,92,W,22,'#9ac078','#7aa858',rng);
+  grass(g,0,108,W,72,rng,'#82b860','#679a4c');
+  /* Helle Steinbauten */
+  stones(g,8,30,110,84,'#8a8494','#c8c4bc',rng);
+  stones(g,206,26,106,88,'#8a8494','#d0ccc4',rng);
+  R(g,8,24,110,8,'#b8b4ac');R(g,206,20,106,8,'#b8b4ac');
+  arch(g,46,64,34,50,'#4a3a30');arch(g,48,66,30,48,'#6a5238');
+  arch(g,242,60,32,54,'#4a3a30');
+  R(g,24,58,12,12,'#3a3348');R(g,88,58,12,12,'#3a3348');R(g,258,54,12,12,'#3a3348');
+  /* Säulen + Banner */
+  for(const sx of [128,168]){R(g,sx-3,58,6,58,'#d8d4cc');R(g,sx-4,56,8,3,'#e8e4dc');R(g,sx-4,112,8,3,'#b8b4ac');}
+  R(g,140,40,8,26,'#a03028');R(g,140,40,8,3,'#e8b450');R(g,172,40,8,26,'#a03028');R(g,172,40,8,3,'#e8b450');
+  path(g,150,124,160,180,14,66,'#d0c8b8',rng);
+  /* Beet / Büsche */
+  for(let i=0;i<10;i++){const bx=16+Math.floor(rng()*288);if(bx>140&&bx<180)continue;
+    ell(g,bx,150+Math.floor(rng()*24),4,3,'#4e7a3a');}
+ }},
+/* ---------- 5. Pfalzkapelle ---------- */
+pfalzKapelle:{prof:'gold',vg:0.42,floor:126,foot:164,minX:40,maxX:280,parts:'dust',
+ paint(g,rng){
+  R(g,0,0,W,126,'#4a3418');
+  stones(g,0,0,W,126,'#3a2a14','#6a5228',rng);
+  for(let i=0;i<40;i++){px(g,Math.floor(rng()*W),Math.floor(rng()*126),['#ffd890','#e8b450','#fff0c0'][Math.floor(rng()*3)]);} /* Mosaikglanz */
+  archWindow(g,30,20,40,64,rng);archWindow(g,250,20,40,64,rng);
+  arch(g,136,40,48,86,'#8a6a2a'); /* Bronzetür */
+  arch(g,139,43,42,83,'#6a4a1a');
+  R(g,139,60,42,2,'#8a6a2a');R(g,139,80,42,2,'#8a6a2a');R(g,139,100,42,2,'#8a6a2a');
+  disc(g,158,72,2,'#e8b450');
+  /* Altar/Pult */
+  R(g,96,96,26,6,'#8a6a2a');R(g,98,102,3,22,'#6a4a1a');R(g,117,102,3,22,'#6a4a1a');
+  R(g,100,92,18,4,'#eadcb6');R(g,100,92,18,1,'#c9b586');
+  /* Kerzen */
+  for(const cx of [70,110,210,246]){R(g,cx,80,3,14,'#e8e0c8');disc(g,cx+1,78,2,'#ffd870');disc(g,cx+1,78,1,'#fff4c8');}
+  /* Goldboden mit Mosaik */
+  R(g,0,126,W,54,'#5a4020');
+  tiles(g,0,126,W,54,160,rng,'#8a6a2a','#6a5228');
+  for(let yy=128;yy<180;yy+=6)for(let xx=((yy/6)%2)*8;xx<W;xx+=16)R(g,xx,yy,8,3,['#a07a30','#c89a40','#8a6a2a'][Math.floor(rng()*3)]);
+  ell(g,160,150,60,12,'rgba(255,216,144,0.16)');
+  ell(g,160,140,30,6,'rgba(255,230,170,0.12)');
+ }},
+/* ---------- 6. Die warmen Bäder ---------- */
+thermen:{prof:'north',vg:0.26,floor:126,foot:160,minX:30,maxX:290,parts:'steam',water:true,
+ paint(g,rng){
+  stones(g,0,0,W,126,'#4a5560','#7a8894',rng);
+  for(const wx of [36,140,244])archWindow(g,wx,16,44,58,rng);
+  /* Säulen */
+  for(const sx of [104,216]){R(g,sx-4,40,8,86,'#9aa4ae');R(g,sx-5,38,10,3,'#c0c8d0');R(g,sx-5,124,10,3,'#7a8894');}
+  /* Becken */
+  R(g,40,118,240,58,'#5a6a78');
+  R(g,44,122,232,50,'#3a7a9a');
+  for(let i=0;i<60;i++){const wx=46+Math.floor(rng()*224),wy=124+Math.floor(rng()*44);
+    R(g,wx,wy,4+Math.floor(rng()*6),1,'rgba(180,230,250,0.5)');}
+  /* Geländer */
+  R(g,40,116,240,3,'#8a6a44');for(let x=44;x<280;x+=16)R(g,x,116,2,8,'#6a5138');
+  /* Fackeln */
+  for(const fx of [24,296]){R(g,fx,60,3,20,'#5a4028');disc(g,fx+1,58,2,'#ffb040');disc(g,fx+1,58,1,'#ffe8a0');}
+ }},
+/* ---------- 7. Kai von Dorestad ---------- */
+kai:{prof:'sunny',vg:0.16,floor:118,foot:158,minX:24,maxX:296,parts:'gulls',water:true,
+ paint(g,rng){
+  sky(g,0,0,W,84,[['#7ec8f0',34],['#aadcf2',26],['#dceef2',24]]);
+  disc(g,282,16,8,'#ffedb0');
+  cloud(g,70,18,1,'#f4f8fc');cloud(g,180,30,1,'#eef4fa');
+  hills(g,0,66,W,14,'#8ab868','#6a9a4e',rng);
+  /* Kai aus Stein */
+  stones(g,0,84,W,40,'#5a5462','#8a8494',rng);
+  R(g,0,84,W,4,'#a8a4b4');
+  /* Pfähle */
+  for(let x=20;x<300;x+=34){R(g,x,64,5,44,'#6a5138');R(g,x,64,5,3,'#8a6a44');disc(g,x+2,63,2,'#7a5c38');}
+  /* Rhein */
+  R(g,0,124,W,56,'#2a6a8a');
+  for(let i=0;i<90;i++){const wx=Math.floor(rng()*W),wy=126+Math.floor(rng()*52);
+    R(g,wx,wy,3+Math.floor(rng()*8),1,'rgba(190,235,250,'+(0.2+rng()*0.4)+')');}
+  dith(g,0,123,W,2,'#2a6a8a','#7ec8f0',0.4);
+  /* Schiffe */
+  ship(g,60,108,rng,-1);ship(g,210,100,rng,1);
+  /* Möwen statisch als Partikel */
+ }},
+/* ---------- 8. Markt von Dorestad ---------- */
+markt:{prof:'sunny',vg:0.18,floor:122,foot:166,minX:24,maxX:296,parts:'dust',
+ paint(g,rng){
+  sky(g,0,0,W,80,[['#86ccf0',32],['#b4e0f4',26],['#e8f2e4',22]]);
+  cloud(g,90,16,1,'#f6fafc');cloud(g,230,28,1,'#eef4fa');
+  hills(g,0,62,W,12,'#8ab868','#6a9a4e',rng);
+  grass(g,0,74,W,106,rng,'#7ab058','#5e9444');
+  /* Stände mit Streifenbaldachin */
+  stall(g,20,92,'#a03028','#e8e0cc');stall(g,120,96,'#2a5a8a','#e8e0cc');stall(g,224,92,'#3a7a3a','#e8e0cc');
+  waage(g,170,120);
+  /* Waren: Stoffballen */
+  const cols=['#8a2a2a','#2a5a8a','#3a7a3a','#8a7a2a','#6a3a7a'];
+  for(let i=0;i<8;i++){const bx=34+i*10;R(g,bx,150,8,8,cols[i%5]);R(g,bx,150,8,2,mix(cols[i%5],'#ffffff',0.2));R(g,bx+2,150,1,8,'#e8b450');}
+  /* Kisten, Fass */
+  planks(g,196,140,22,14,'#8a6a44',rng);
+  R(g,246,136,18,20,'#8a6a44');ell(g,255,136,9,3,'#6a5138');R(g,246,141,18,2,'#5a4028');R(g,246,150,18,2,'#5a4028');
+  path(g,150,122,160,180,12,54,'#c8b088',rng);
+ }},
+/* ---------- 9. Münzwerkstatt ---------- */
+muenzwerkstatt:{prof:'indoor',vg:0.34,floor:128,foot:166,minX:30,maxX:290,parts:'sparks',fire:true,
+ paint(g,rng){
+  R(g,0,0,W,128,'#241f30');
+  stones(g,0,0,W,128,'#1c1826','#3c3648',rng);
+  /* Esse mit Glut (Flackern kommt dynamisch) */
+  stones(g,24,60,70,68,'#14101c','#453f52',rng);
+  arch(g,38,84,42,44,'#0c0a12');
+  ell(g,59,120,16,6,'#ff7a20');ell(g,59,122,10,4,'#ffc040');ell(g,59,124,5,2,'#fff0a0');
+  /* Amboss */
+  R(g,150,116,26,6,'#3a3f4c');R(g,158,110,10,6,'#4a505e');R(g,162,122,5,8,'#2a2e38');R(g,154,130,18,4,'#2a2e38');
+  R(g,150,116,26,1,'#8a90a0');
+  /* Tisch mit Stempel und Silber */
+  desk(g,210,100,80,rng);
+  R(g,222,94,10,6,'#c8ccd4');R(g,222,94,10,1,'#eef0f4'); /* Silberklumpen */
+  R(g,244,90,8,10,'#8a6a2a');R(g,244,90,8,2,'#e8b450');R(g,246,92,4,6,'#5a4018'); /* Stempel mit Griff */
+  R(g,266,92,12,8,'#6a5138');R(g,266,92,12,1,'#8a6a42');
+  /* Hängendes Werkzeug */
+  line(g,110,0,110,26,'#3a3348');R(g,107,26,7,5,'#5a6070');
+  line(g,126,0,126,20,'#3a3348');R(g,123,20,6,8,'#5a6070');
+  floorBoards(g,0,128,W,52,160,rng,'#4a3c30','#5a4a3a');
+  ell(g,59,140,26,5,'rgba(255,140,50,0.18)');
+ }},
+/* ---------- 10. Klostergarten ---------- */
+garten:{prof:'sunny',vg:0.16,floor:120,foot:166,minX:24,maxX:296,parts:'butterflies',
+ paint(g,rng){
+  sky(g,0,0,W,78,[['#86ccf0',30],['#b4e0f4',24],['#e8f2e4',24]]);
+  cloud(g,60,14,1,'#f6fafc');cloud(g,200,24,1,'#eef4fa');
+  stones(g,0,58,W,26,'#6a6472','#9a94a6',rng); /* Klostermauer */
+  R(g,0,58,W,3,'#b0aabc');
+  grass(g,0,84,W,96,rng,'#7ab058','#5e9444');
+  /* Kräuterbeete */
+  const herbs=[['#5e8a4e',0],['#4e7a6a',1],['#6a9a5e',2]];
+  for(let b=0;b<4;b++){const bx=18+b*70;
+    R(g,bx,104,58,14,'#6a4c30');
+    for(let i=0;i<58;i+=3){const hh=3+Math.floor(rng()*4);
+      R(g,bx+i,104-hh,2,hh,herbs[b%3][0]);if(rng()<0.3)px(g,bx+i+1,104-hh-1,'#d8e8a0');}}
+  /* Bienenkorb (Klotzbeute/Skep) */
+  arch(g,236,108,26,20,'#8a6a2a');arch(g,239,111,20,17,'#c2a558');
+  for(let i=0;i<5;i++)R(g,236,112+i*3,26,1,'#6a4a1a');
+  arch(g,247,120,6,8,'#2a1c0c');
+  /* Zaun */
+  for(let x=14;x<300;x+=16){R(g,x,92,3,14,'#8a6a44');}
+  R(g,12,96,290,2,'#9a7a4c');
+  /* Blumen */
+  for(let i=0;i<12;i++){const fx=8+Math.floor(rng()*304),fy=122+Math.floor(rng()*52);
+    R(g,fx,fy-2,1,3,'#4e7a3a');px(g,fx,fy-3,['#e86a8a','#e8d050','#c87ae8'][Math.floor(rng()*3)]);}
+  path(g,150,120,160,180,10,50,'#c8b088',rng);
+ }},
+/* ---------- 11. Infirmarium ---------- */
+infirmarium:{prof:'indoor',vg:0.30,floor:128,foot:164,minX:34,maxX:286,parts:'dust',
+ paint(g,rng){
+  stones(g,0,0,W,128,'#4a4458','#6e7488',rng);
+  archWindow(g,24,18,38,52,rng);
+  /* Krankenbett */
+  R(g,180,108,86,8,'#6a4c2c');R(g,180,108,86,2,'#8a6a42');
+  R(g,184,96,6,20,'#5a3c22');R(g,258,96,6,20,'#5a3c22');
+  R(g,184,100,80,12,'#8a8fa8');R(g,184,100,80,3,'#a8adc2'); /* Decke */
+  R(g,188,104,16,8,'#e8e0d0');R(g,188,104,16,2,'#f4eee0');       /* Kissen */
+  /* Lesepult mit Arzneibuch */
+  R(g,84,104,30,4,'#6a4c2c');R(g,86,108,3,20,'#5a3c22');R(g,108,108,3,20,'#5a3c22');
+  R(g,86,98,26,6,'#7a1f1f');R(g,86,98,26,1,'#e8b450');R(g,99,98,1,6,'#e8b450');
+  /* Hängende Kräuter */
+  for(const hx of [130,146]){line(g,hx,0,hx,18,'#5a5048');R(g,hx-3,18,6,10,'#5e8a4e');R(g,hx-3,18,6,2,'#4e7a3a');}
+  /* Kerze */
+  R(g,60,110,3,8,'#e8e0c8');disc(g,61,108,2,'#ffd870');
+  floorBoards(g,0,128,W,52,160,rng,'#66543c','#76644a');
+  ell(g,43,60,20,26,'rgba(255,230,170,0.10)');
+ }},
+/* ---------- 12. Klosterküche ---------- */
+kueche:{prof:'indoor',vg:0.32,floor:128,foot:166,minX:30,maxX:290,parts:'smoke',fire:true,
+ paint(g,rng){
+  stones(g,0,0,W,128,'#3c3440','#585064',rng);
+  /* Herd */
+  stones(g,30,64,90,64,'#241f2a','#4c4656',rng);
+  arch(g,46,88,58,40,'#0e0b12');
+  ell(g,75,120,20,7,'#ff7a20');ell(g,75,123,13,5,'#ffc040');ell(g,75,126,7,3,'#fff0a0');
+  /* Kessel über dem Feuer */
+  line(g,75,64,75,78,'#2a2530');
+  ell(g,75,88,17,8,'#2e2836');R(g,58,88,34,8,'#2e2836');ell(g,75,88,17,3,'#4a4254');
+  R(g,60,86,30,2,'#565064');
+  /* Regal mit Töpfen */
+  planks(g,150,34,130,6,'#6a4c2c',rng);
+  for(let i=0;i<6;i++){const px2=158+i*20;R(g,px2,20,10,14,['#8a5a3a','#7a4a6a','#5a6a8a','#8a7a3a'][i%4]);ell(g,px2+5,20,5,2,'#3a2c22');}
+  planks(g,150,60,130,6,'#6a4c2c',rng);
+  for(let i=0;i<5;i++){const px2=160+i*24;R(g,px2,48,12,12,'#9a9484');ell(g,px2+6,48,6,2,'#6a6455');}
+  /* Tisch */
+  desk(g,170,104,80,rng);
+  R(g,182,98,14,6,'#c8b394');R(g,182,98,14,1,'#e0d0b0');
+  floorBoards(g,0,128,W,52,160,rng,'#584a3c','#68584a');
+  ell(g,75,146,30,6,'rgba(255,140,50,0.16)');
+ }}
+};
+function ship(g,x,y,rng,dir){
+  R(g,x,y,64,10,'#5a4028');R(g,x,y,64,2,'#7a5c38');
+  R(g,x+4,y-3,56,3,'#4a3520');
+  R(g,x+30,y-34,3,32,'#6a5138');
+  const sc=dir>0?['#e8e0cc','#c8b394']:['#d8d0c0','#b8b0a0'];
+  for(let i=0;i<26;i++){const t=i/26;R(g,x+31+dir*Math.round(t*24),y-33+Math.round(t*22),3,2,sc[0]);}
+  R(g,x+31+dir*24,y-12,2,4,'#e8e0cc');
+}
+function stall(g,x,y,c1,c2){
+  R(g,x,y+22,64,6,'#6a4c2c');R(g,x+2,y+28,4,20,'#5a3c22');R(g,x+58,y+28,4,20,'#5a3c22');
+  for(let i=0;i<64;i+=8)dith(g,x+i,y,8,10,i%16<8?c1:c2, i%16<8?c2:c1,0.5);
+  R(g,x-3,y+10,70,3,'#4a3520');
+}
+/* ---------- Raum-Metadaten: Zugänge, Hotspots, NPCs, Tiere ---------- */
+/* NPC-Stile (Farben verbindlich) */
+const STYLES={
+  wido:{key:'wido',skin:'#e8b88a',hair:'#7a4a22',robe:'#8c7358',robeD:'#6b5540',belt:'#d8cfa8',shoe:'#3a2c22',long:true,hs:'tonsure',rope:'#d8cfa8'},
+  hartmut:{key:'hartmut',skin:'#d8b090',hair:'#9a9a9a',robe:'#3a3548',robeD:'#2a2536',belt:'#6a6278',shoe:'#241f2e',long:true,hs:'short',brow:'#e8e8e8'},
+  ratold:{key:'ratold',skin:'#e0a878',hair:'#b03a22',robe:'#4f8a3c',robeD:'#3a6a2c',belt:'#8a6a2a',buckle:'#e8b450',shoe:'#5a3a22',hose:'#b03a22',hs:'short',cheek:'#e07a5a'},
+  gisla:{key:'gisla',skin:'#e8b88a',hair:'#d8b060',robe:'#5b6f98',robeD:'#465578',belt:'#3a4a68',shoe:'#4a3a2c',hs:'scarf',scarf:'#d8d4c8',apron:'#e8e4d8'},
+  isaak:{key:'isaak',skin:'#c88a5a',hair:'#2a1c14',robe:'#8a4a3a',robeD:'#6a382c',belt:'#5a3c22',shoe:'#3a2c1c',hs:'short',beard:true,cap:'wrap',capCol:'#e8e4d8'},
+  einhard:{key:'einhard',skin:'#e0b088',hair:'#5a4028',robe:'#3e5a78',robeD:'#2e465e',belt:'#2a3448',shoe:'#33261c',hs:'short'},
+  karl:{key:'karl',skin:'#e8c098',hair:'#e8e8e8',robe:'#e8e2d0',robeD:'#c8c2b0',belt:'#8a7a4a',shoe:'#5a4632',long:true,hs:'short',beard:true,beardCol:'#e8e8e8',mus:'#e8e8e8',tall:true},
+  wache:{key:'wache',skin:'#d8a878',hair:'#4a3020',robe:'#a03028',robeD:'#7a2420',belt:'#3a2a18',shoe:'#33261c',hose:'#6a5a44',hs:'short',cap:'helm',spear:true},
+  zollner:{key:'zollner',skin:'#d8a878',hair:'#3a2c1c',robe:'#5a5a6a',robeD:'#44444f',belt:'#33333c',shoe:'#2a2018',hose:'#4a4038',hs:'short',cap:'coif'},
+  ketil:{key:'ketil',skin:'#e0b088',hair:'#c8a050',robe:'#7a4a2a',robeD:'#5e3a20',cloak:'#a03028',belt:'#4a3018',shoe:'#3a2c1c',hose:'#5a4632',hs:'full',cap:'cone',capCol:'#b03a2e'},
+  wibrand:{key:'wibrand',skin:'#e0b088',hair:'#6a4a2a',robe:'#3a6a5a',robeD:'#2a5244',belt:'#2a3a32',shoe:'#33261c',hs:'full',cloak:'#2a4a6a'},
+  ermenrich:{key:'ermenrich',skin:'#d8a878',hair:'#7a5a3a',robe:'#6a5a44',robeD:'#524434',belt:'#3a3028',shoe:'#2e261c',hose:'#4a4038',hs:'short',apron:'#4a4038'},
+  hiltrud:{key:'hiltrud',skin:'#e8b88a',hair:'#8a5a2a',robe:'#7a6a3a',robeD:'#5e5230',belt:'#4a4028',shoe:'#3a2c1c',hs:'scarf',scarf:'#b03a2e'},
+  grimbald:{key:'grimbald',skin:'#dcae82',hair:'#6a5a44',robe:'#4a4a56',robeD:'#383844',belt:'#2e2e38',shoe:'#241f2a',hs:'tonsure'},
+  walto:{key:'walto',skin:'#e0b088',hair:'#8a8a8a',robe:'#5a4a6a',robeD:'#463a54',belt:'#3a3044',shoe:'#2c2436',long:true,hs:'tonsure'},
+  kuno:{key:'kuno',skin:'#e8b88a',hair:'#c89040',robe:'#8a7a3a',robeD:'#6a5e2c',belt:'#4a4020',shoe:'#3a2c1c',hose:'#6a5a44',hs:'short'},
+  abt:{key:'abt',skin:'#dcae82',hair:'#5a4a3a',robe:'#2e2a38',robeD:'#221e2c',cloak:'#6a1f2e',belt:'#1e1a26',shoe:'#1c1824',long:true,hs:'tonsure'}
+};
+const NPC_COL={wido:'#ffe38a',hartmut:'#cfd6ff',ratold:'#9ae86a',gisla:'#a8c8ff',isaak:'#ffb08a',einhard:'#8ab8ff',karl:'#fff4c8',wache:'#ff8a7a',zollner:'#c8c8d8',ketil:'#ff9a6a',wibrand:'#7ae8c8',ermenrich:'#d8b890',hiltrud:'#ffd8a0',grimbald:'#b8c8e8',walto:'#c8a8e8',kuno:'#e8e08a',abt:'#e8b0c8'};
+/* ================= 5. Inventar-Items ================= */
+const ITEMS={
+  pergament:{name:'Pergament', icon(g){R(g,5,3,14,18,'#eadcb6');R(g,5,3,14,1,'#c9b586');R(g,5,20,14,1,'#c9b586');R(g,7,6,10,1,'#b89a5e');R(g,7,9,10,1,'#b89a5e');R(g,7,12,7,1,'#b89a5e');}},
+  schabeisen:{name:'Schabeisen', icon(g){R(g,6,4,12,3,'#c8ccd4');R(g,6,4,12,1,'#eef0f4');R(g,10,7,4,10,'#7a5a34');R(g,10,7,4,2,'#9a7a4c');}},
+  tinte:{name:'Tintenfass', icon(g){R(g,8,8,8,12,'#1b1424');R(g,8,8,8,2,'#3a3348');ell(g,12,8,4,2,'#0c0a16');R(g,10,4,4,4,'#e8e0c8');}},
+  feder:{name:'Schreibfeder', icon(g){line(g,7,20,18,5,'#e8e8e8');R(g,16,4,3,4,'#c8c8c8');R(g,8,18,2,2,'#e8e8e8');}},
+  federT:{name:'Feder mit Tinte', icon(g){line(g,7,20,18,5,'#e8e8e8');R(g,16,4,3,4,'#1b1424');R(g,8,18,2,2,'#1b1424');}},
+  urbar:{name:'Neues Urbar', icon(g){R(g,4,3,16,18,'#eadcb6');R(g,4,3,16,2,'#8a6a3a');R(g,6,7,12,1,'#3a2a18');R(g,6,10,12,1,'#3a2a18');R(g,6,13,12,1,'#3a2a18');R(g,6,16,8,1,'#3a2a18');R(g,14,6,5,5,'#a03028');}},
+  rolle:{name:'Pergamentrolle', icon(g){R(g,4,9,16,7,'#eadcb6');ell(g,4,12,2,3,'#c9b586');ell(g,20,12,2,3,'#c9b586');R(g,4,9,16,1,'#fff0d0');line(g,8,12,16,12,'#b89a5e');}},
+  federE:{name:'Einhards Feder', icon(g){line(g,7,20,18,5,'#d8d8e8');R(g,16,4,3,4,'#8ab8ff');R(g,8,18,2,2,'#8ab8ff');}},
+  bericht:{name:'Reisebericht', icon(g){R(g,4,3,16,18,'#eadcb6');R(g,4,3,16,1,'#c9b586');R(g,6,6,12,1,'#3a2a18');R(g,6,9,12,1,'#3a2a18');R(g,6,12,10,1,'#3a2a18');R(g,6,15,12,1,'#3a2a18');R(g,15,16,4,4,'#8a2a2a');}},
+  silber:{name:'Silberklumpen', icon(g){R(g,5,10,14,8,'#c8ccd4');R(g,5,10,14,2,'#eef0f4');R(g,8,8,8,3,'#a8adb8');R(g,10,18,4,2,'#8a8f9a');}},
+  platte:{name:'Silberplatte', icon(g){R(g,4,9,16,7,'#c8ccd4');R(g,4,9,16,2,'#eef0f4');R(g,4,15,16,1,'#8a8f9a');}},
+  beutel:{name:'Beutel mit 12 Denaren', icon(g){R(g,7,9,10,11,'#8a6a3a');R(g,8,6,8,4,'#a8895c');ell(g,12,9,5,2,'#6a5138');for(let i=0;i<4;i++)disc(g,9+i*3,14,1,'#e8e8f0');}},
+  denare:{name:'2 Denare', icon(g){disc(g,9,12,4,'#d8dce8');disc(g,15,12,4,'#c8ccd8');R(g,8,11,2,2,'#8a8f9a');R(g,14,11,2,2,'#8a8f9a');}},
+  maentel:{name:'3 friesische Mäntel', icon(g){R(g,6,4,12,16,'#3a5a8a');R(g,6,4,12,2,'#2a4468');R(g,6,10,12,1,'#e8b450');R(g,6,16,12,3,'#2a4468');R(g,11,4,2,16,'#e8b450');}},
+  salbei:{name:'Salbei', icon(g){for(let i=0;i<5;i++){ell(g,8+i*2,14-i*2,3,2,'#7a9a6a');R(g,8+i*2,14-i*2,1,4,'#5e7a52');}}},
+  minze:{name:'Minze', icon(g){for(let i=0;i<5;i++){R(g,7+i*2,18-i*3,3,4,'#4e8a4e');px(g,8+i*2,14-i*3,'#6aa86a');}R(g,11,20,2,2,'#3a6a3a');}},
+  honig:{name:'Honigwabe', icon(g){arch(g,6,8,12,12,'#e8b450');for(let y=9;y<19;y+=3)R(g,6,6+y,12,1,'#c89030');R(g,10,13,4,4,'#8a5a10');}},
+  trank:{name:'Heiltrank', icon(g){R(g,8,10,8,10,'#7a4a2a');ell(g,12,10,4,2,'#9a6a3a');R(g,10,6,4,4,'#c8c0b0');R(g,9,13,6,5,'#5a8a6a');disc(g,11,15,1,'#a8d89a');}}
+};
+const WIT={
+  pergament:['Auf Pergament herumkauen? Das hat die Ziege schon probiert.','Pergament ist zum Schreiben da, nicht zum Spielen.'],
+  schabeisen:['Damit kratzt man Pergament – nicht diesen Gegenstand.'],
+  tinte:['Tinte auf alles außer Feder und Pergament? Unsinn.'],
+  feder:['Die Feder schreibt nur, wenn sie Tinte hat.'],
+  federT:['Die nasse Feder schreibt auf Pergament – sonst nirgends.'],
+  urbar:['Das Urbar gibt man den Königsboten – nicht wegschmeißen.'],
+  rolle:['Die Rolle beschreibt man mit einer Feder.'],
+  federE:['Einhards Feder schreibt auf Pergament.'],
+  bericht:['Den Bericht gibt man Kaiser Karl.'],
+  silber:['Silber wird auf dem Amboss dünn gehämmert.'],
+  platte:['Die Platte kommt unter den Münzstempel.'],
+  beutel:['Den Beutel mit Denaren gibt man dem Händler Wibrand.'],
+  denare:['Die Denare zahlst du als Zoll an den Zöllner.'],
+  maentel:['Die Mäntel sind für Ketil und den Kalifen bestimmt.'],
+  salbei:['Kräuter kommen in den Kessel in der Küche.'],
+  minze:['Kräuter kommen in den Kessel in der Küche.'],
+  honig:['Honig süßt den Trank im Kessel.'],
+  trank:['Den Heiltrank gibt man Bruder Hartmut.'],
+  default:['Das ergibt keinen Sinn. Selbst Guybrush hätte das nicht kombiniert.','Interessante Idee. Leider nutzlos.','Damit kommst du nicht weiter.']
+};
+/* ================= 6. Wissenskarten ================= */
+const CARDS={
+  palimpsest:{t:'Pergament & Palimpsest', tag:'Kapitel 1 · Schreiben', x:'Pergament machte man aus Tierhaut. Es war teuer. Deshalb schabte man alte Texte mit einem Schabeisen ab und schrieb neu darauf. So ein wiederverwendetes Pergament nennt man Palimpsest. Bücher waren im Jahr 802 kostbar – nur Klöster und der Hof hatten viele.'},
+  urbar:{t:'Das Urbar', tag:'Kapitel 1 · Grundherrschaft', x:'In einem Urbar stand schriftlich, welche Abgaben ein Bauer seinem Herrn schuldete: zum Beispiel Getreide, Hühner, Ziegen oder Arbeitstage. Das Urbar machte die Pflichten verbindlich – für beide Seiten.'},
+  staende:{t:'Die Ständeordnung', tag:'Kapitel 1 · Weltbild', x:'Man stellte sich die Gesellschaft in drei Ständen vor: Der Klerus betet, der Adel kämpft, die Bauern arbeiten. Man sagte, Gott habe diese Ordnung so gewollt. Heute fragen Historiker: Wer hat diese Ordnung erfunden – und wem nützt sie?'},
+  grundherrschaft:{t:'Grundherrschaft', tag:'Kapitel 1 · Bauern', x:'Die meisten Bauern im Jahr 802 gehörten nicht sich selbst. Sie bewirtschafteten das Land eines Grundherrn und zahlten ihm Abgaben und Frondienste. Dafür bekamen sie Schutz und durften auf dem Land leben.'},
+  lehnswesen:{t:'Lehnswesen', tag:'Kapitel 1 · Herrschaft', x:'Der König gab seinen Vasallen Land – ein „Lehen“. Dafür mussten sie Kriegsdienst leisten und den König beraten. So konnte Karl sein großes Reich regieren, ohne überall selbst hinzureisen und ohne viele Beamte.'},
+  karl:{t:'Karl der Große', tag:'Kapitel 2 · Herrscher', x:'Karl war seit 768 König der Franken und seit 800 Kaiser. Er machte Aachen zu seiner Hauptstadt, ließ Schulen und Klöster bauen und Münzen prägen. 800 krönte ihn der Papst in Rom zum Kaiser.'},
+  abulAbbas:{t:'Abul Abbas, der Elefant', tag:'Kapitel 2 · Kontakte', x:'802 schenkte der Kalif Harun ar-Raschid aus Bagdad Karl einen Elefanten namens Abul Abbas. Elefanten kannte man in Europa seit den Römern kaum noch. Das Geschenk zeigt: Frankenreich und Kalifat standen in diplomatischem Kontakt – über tausende Kilometer.'},
+  einhard:{t:'Einhard und die Quellen', tag:'Kapitel 2 · Quellenkritik', x:'Einhard war ein Gelehrter am Hof Karls und schrieb die „Vita Karoli Magni“, eine Lebensbeschreibung des Kaisers. Weil er Karl nahestand, malt er ihn sehr positiv. Deshalb fragen wir bei jeder Quelle: Wer schrieb wann – und warum?'},
+  thermen:{t:'Die warmen Bäder von Aachen', tag:'Kapitel 2 · Pfalz', x:'Aachen hatte heiße Quellen. Karl liebte die warmen Bäder. In seiner Pfalz empfing er Gesandte aus aller Welt – auch aus Bagdad. Aachen war um 800 das politische Zentrum des Frankenreichs.'},
+  dorestad:{t:'Dorestad', tag:'Kapitel 3 · Handel', x:'Dorestad am Rhein war um 800 einer der größten Handelsplätze Europas. Hier trafen sich Kaufleute aus dem Norden, Westen und Osten. Gehandelt wurden Pelze, Bernstein, Wein, Salz, Glas und kostbare Stoffe. Auf der Europakarte lag Dorestad mitten im Frankenreich – an einer der wichtigsten Wasserstraßen.'},
+  denar:{t:'Der Denar', tag:'Kapitel 3 · Münzen', x:'Karl ließ überall im Reich gleiche Silbermünzen prägen: den Denar. Prägen durfte nur der König in seinen Münzstätten. Auf dem Stempel standen Buchstaben spiegelverkehrt – damit der Abdruck auf der Münze richtig herum lesbar war.'},
+  handel:{t:'Fernhandel', tag:'Kapitel 3 · Waren', x:'Fränkische Händler kauften in Dorestad friesische Wollmäntel – sie waren beim Kalifen in Bagdad sehr begehrt. Luxusgüter liefen über hunderte Kilometer, bezahlt mit Silberdenaren. Handel verband Europa mit der islamischen Welt.'},
+  zoll:{t:'Zoll', tag:'Kapitel 3 · Abgaben', x:'Wer Waren über eine Grenze brachte, musste Zoll zahlen – an den König. Der Zoll finanzierte den Königshof und schützte heimische Händler. Ohne Zoll keine Fahrt.'},
+  kloster:{t:'Klosterleben', tag:'Kapitel 4 · Alltag', x:'Im Kloster lebten Mönche nach festen Regeln: Gebet, Arbeit, Lesung, Essen, Schlaf. Der Abt leitete das Kloster. Klöster waren Orte der Bildung, der Landwirtschaft und der Krankenpflege.'},
+  arzneibuch:{t:'Das Lorscher Arzneibuch', tag:'Kapitel 4 · Medizin', x:'Um 800 entstand im Kloster Lorsch eine Handschrift mit Heilrezepten aus der Antike: Salbei, Minze, Honig und andere Kräuter gegen Fieber, Husten und Bauchweh. Mönche pflegten Kranke im Infirmarium.'},
+  lesen:{t:'Wer konnte lesen?', tag:'Kapitel 4 · Quellen', x:'Im Jahr 802 konnten nur wenige Menschen lesen und schreiben – vor allem Mönche und Kleriker. Deshalb stammen fast alle schriftlichen Quellen aus Klöstern. Die Stimmen von Bauern, Frauen und einfachen Leuten fehlen uns oft. Darum lesen wir Quellen kritisch.'}
+};
+/* ================= 7. Quiz ================= */
+const QUIZ={
+ 1:{title:'Quiz zu Kapitel 1', qs:[
+  {q:'Was ist ein Palimpsest?', o:['Pergament, das abgeschabt und neu beschrieben wurde','Ein Buch aus purem Gold','Eine besondere Ziegenrasse'], a:0, w:'Richtig! Altes Pergament wurde mit dem Schabeisen abgeschabt und neu beschrieben.'},
+  {q:'In welche drei Stände teilte man die Gesellschaft?', o:['Klerus, Adel, Bauern','Kaiser, König, Bauer','Mönch, Ritter, Magd'], a:0, w:'Richtig! Man sagte: Der Klerus betet, der Adel kämpft, die Bauern arbeiten.'},
+  {q:'Was stand in einem Urbar?', o:['Die Abgaben, die ein Bauer seinem Herrn schuldete','Backrezepte für Brot','Die Wettervorhersage'], a:0, w:'Richtig! Das Urbar listete Getreide, Tiere und Arbeitstage auf.'}]},
+ 2:{title:'Quiz zu Kapitel 2', qs:[
+  {q:'Wer schenkte Karl im Jahr 802 den Elefanten Abul Abbas?', o:['Der Kalif Harun ar-Raschid aus Bagdad','Der König von England','Ein Bauer aus dem Dorf'], a:0, w:'Richtig! Das Geschenk zeigte den Kontakt zwischen Frankenreich und Kalifat.'},
+  {q:'Was schrieb Einhard?', o:['Eine Lebensbeschreibung Karls des Großen','Ein Kochbuch','Ein Steuerverzeichnis'], a:0, w:'Richtig! Die „Vita Karoli Magni“ – freundlich, weil Einhard Karl nahestand.'},
+  {q:'Warum fragt man bei einer Quelle: „Wer schrieb das – und warum?“', o:['Weil jeder Schreiber eine eigene Sicht auf die Dinge hat','Weil Pergament von allein lügt','Weil Tinte mit der Zeit die Farbe wechselt'], a:0, w:'Richtig! Quellenkritik heißt: Herkunft und Absicht einer Quelle prüfen.'}]},
+ 3:{title:'Quiz zu Kapitel 3', qs:[
+  {q:'Wo lag der große Handelsplatz Dorestad?', o:['Am Rhein, im Frankenreich','In den Alpen','Am Mittelmeer'], a:0, w:'Richtig! Dorestad am Rhein war um 800 ein Zentrum des Fernhandels.'},
+  {q:'Warum stand das Zeichen auf dem Münzstempel spiegelverkehrt?', o:['Damit der Abdruck auf der Münze richtig herum lesbar ist','Weil der Münzer linkshändig war','Aus Zufall'], a:0, w:'Richtig! Der Stempel ist das Negativ – der Prägedruck das Positiv.'},
+  {q:'Was kaufte man in Dorestad für den Kalifen in Bagdad?', o:['Friesische Wollmäntel','Elefanten','Bücher aus Pergament'], a:0, w:'Richtig! Kostbare Stoffe waren Luxusgüter – bezahlt mit Denaren.'}]},
+ 4:{title:'Quiz zu Kapitel 4', qs:[
+  {q:'Was enthält das Lorscher Arzneibuch?', o:['Heilrezepte mit Kräutern und Honig','Kriegspläne','Steuerlisten'], a:0, w:'Richtig! Salbei, Minze, Honig – Rezepte aus der Antike, gesammelt im Kloster Lorsch.'},
+  {q:'Wer konnte im Jahr 802 in der Regel lesen und schreiben?', o:['Vor allem Mönche und Kleriker','Alle Bauern','Nur die Kaufleute'], a:0, w:'Richtig! Bildung gab es vor allem in Klöstern und an Höfen.'},
+  {q:'Was bedeutet das für unsere heutigen Quellen?', o:['Fast alle schriftlichen Quellen stammen aus Klöstern – andere Stimmen fehlen oft','Es gibt gar keine Quellen aus dem Jahr 802','Alle Quellen sind falsch'], a:0, w:'Richtig! Darum lesen wir Quellen kritisch und fragen, wer sie geschrieben hat.'}]}
+};
+/* ================= 8. Kapitel ================= */
+const ROOMNAME={skriptorium:'Skriptorium', koenigshof:'Königshof', gislasHufe:'Gislas Hufe', pfalzAachen:'Pfalz Aachen', pfalzKapelle:'Pfalzkapelle', thermen:'Die warmen Bäder', kai:'Kai von Dorestad', markt:'Markt von Dorestad', muenzwerkstatt:'Münzwerkstatt', garten:'Klostergarten', infirmarium:'Infirmarium', kueche:'Klosterküche'};
+const CH={
+ 1:{title:'Die Ziege hat’s gefressen', place:'Königshof im Frankenreich', date:'Frühsommer 802',
+   rooms:['skriptorium','koenigshof','gislasHufe'], start:'skriptorium', inv:[],
+   intro:'Die Ziege des Meiers Ratold hat das Urbar gefressen – und die Königsboten kommen! Schreibe ein neues Urbar: Pergament abschaben, Tinte, Feder – und die Abgaben der Bäuerin Gisla.',
+   disk:'Diskussion: Wie wurde die Ständeordnung begründet? Wer hat diese Begründung erfunden – und wem nützt sie?'},
+ 2:{title:'Der Elefant des Kaisers', place:'Pfalz Aachen', date:'Juli 802',
+   rooms:['pfalzAachen','pfalzKapelle','thermen'], start:'pfalzAachen', inv:[],
+   intro:'Isaak kehrt aus Bagdad zurück – mit dem Elefanten Abul Abbas im Gepäck! Schreibe den Reisebericht für Kaiser Karl: Schau dir den Elefanten genau an, hol Einhards Feder in der Pfalzkapelle und gib den Bericht Karl in den warmen Bädern.',
+   disk:'Diskussion: War Karl ein „großer“ Herrscher? Wem glaubt man welche Aussage über ihn – Einhard, einem Bauern, einem fremden Gesandten?'},
+ 3:{title:'Silber für Dorestad', place:'Handelsplatz am Rhein', date:'Spätsommer 802',
+   rooms:['kai','markt','muenzwerkstatt'], start:'kai', inv:['denare'],
+   intro:'Kaufe drei friesische Mäntel für den Kalifen in Bagdad! Sprich mit Ketil am Kai, sieh dir die Preise auf dem Markt an, präge Denare in der Münzwerkstatt (Vorsicht: der Stempel ist spiegelverkehrt!) und zahl den Zoll.',
+   disk:'Diskussion: Wo lag das Frankenreich auf der Europakarte – und mit wem handelten die Franken? Zeichne es auf einer Karte nach!'},
+ 4:{title:'Kräuter, Honig und eine Ziege', place:'Im Kloster', date:'Herbst 802',
+   rooms:['infirmarium','garten','kueche'], start:'infirmarium', inv:[],
+   intro:'Bruder Hartmut ist krank! Lies das Rezept im Lorscher Arzneibuch, sammle Salbei und Minze im Klostergarten, Honig am Bienenkorb – und braue den Heiltrank am Herd in der Küche.',
+   disk:'Diskussion: Wer konnte im Frühmittelalter lesen und schreiben – und was heißt das für unsere heutigen Quellen über das Mittelalter?'}
+};
+/* Lösungswege für die Lehrerseite */
+const LOESUNG={
+ 1:['Im Skriptorium: Nimm Pergament (Regal), Schabeisen, Tintenfass und Feder am Pult.','Benutze Schabeisen mit Pergament (Palimpsest). Benutze Tinte mit Feder.','Gehe zum Königshof: Rede mit Meier Ratold und dem Königsboten (Wache).','Gehe zu Gislas Hufe: Rede mit Gisla (ihre Abgaben).','Zurück im Skriptorium: Benutze Feder mit Tinte auf Pergament → Neues Urbar.','Gib das Urbar an den Königsboten (Wache) am Königshof.'],
+ 2:['In der Pfalz: Rede mit Isaak. Schau an den Elefanten und Nimm die Pergamentrolle aus dem Rüssel.','Gehe in die Pfalzkapelle: Rede mit Einhard und Nimm seine Feder am Pult.','Benutze Einhards Feder mit der Pergamentrolle → Reisebericht.','Gehe in die warmen Bäder: Gib den Reisebericht an Kaiser Karl.'],
+ 3:['Am Kai: Rede mit Ketil (Auftrag) und mit dem Zöllner (Zoll = 2 Denare).','Auf dem Markt: Rede mit Wibrand (3 Mäntel = 12 Denare).','In der Münzwerkstatt: Rede mit Ermenrich, Nimm Silberklumpen, Benutze Silber mit Amboss → Platte, Benutze Platte mit Stempel → Beutel mit 12 Denaren.','Gib den Beutel an Wibrand → 3 friesische Mäntel. Gib die Mäntel an Ketil. Gib die 2 Denare an den Zöllner (Zoll).'],
+ 4:['Im Infirmarium: Schau an das Arzneibuch am Lesepult (Rezept: Salbei, Minze, Honig). Rede mit dem Abt.','Im Klostergarten: Nimm Salbei, Nimm Minze, Nimm Honigwabe am Bienenkorb.','In der Küche: Benutze Salbei, Minze und Honig mit dem Kessel am Herd → Heiltrank.','Gib den Heiltrank an Bruder Hartmut im Infirmarium.']
+};
+/* ================= 9. Engine-Kern ================= */
+const $=id=>document.getElementById(id);
+const cv=$('game'), ctx=cv.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+document.body.style.userSelect='none';
+
+const ROOMSEED={skriptorium:11,koenigshof:23,gislasHufe:37,pfalzAachen:41,pfalzKapelle:53,thermen:67,kai:71,markt:83,muenzwerkstatt:97,garten:101,infirmarium:113,kueche:127};
+let save={done:{},cards:[],sound:true};
+function loadSave(){try{const j=localStorage.getItem('widoSave');if(j){const o=JSON.parse(j);if(o&&typeof o==='object')save=Object.assign(save,o);}}catch(e){}}
+function writeSave(){try{localStorage.setItem('widoSave',JSON.stringify(save));}catch(e){}}
+loadSave();
+
+let S={ch:1,room:'skriptorium',x:160,tx:null,inv:[],flags:{},cards:[],face:1};
+let verb=null,pending=null,walkCb=null,fade=0,fading=false;
+let parts=[],bubbles=[],narrT=null,toastT=null;
+
+const VERBS=[['gehe','Gehe zu'],['schaue','Schau an'],['nimm','Nimm'],['benutze','Benutze'],['rede','Rede mit'],['gib','Gib']];
+const VLABEL=Object.fromEntries(VERBS);
+
+const bgCache={};
+function getBG(room){
+  if(!bgCache[room]){
+    const c=document.createElement('canvas');c.width=W;c.height=H;
+    const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    PAINT[room].paint(g,mulberry32(ROOMSEED[room]));
+    gradeCanvas(c,PROFILES[PAINT[room].prof],PAINT[room].vg);
+    bgCache[room]=c;
+  }
+  return bgCache[room];
+}
+
+/* ---- Zustandshilfen ---- */
+const has=id=>S.inv.includes(id);
+function give(id){if(!has(id)){S.inv.push(id);if(S.inv.length>5)S.inv.shift();renderInv();sfx('plumps');}}
+function take(id){S.inv=S.inv.filter(i=>i!==id);renderInv();}
+const F=k=>!!S.flags[k];
+function flag(k,v){S.flags[k]=v===undefined?true:v;}
+let narrTimer=0;
+function narr(t){const n=$('narr');n.textContent=t;n.style.display='block';clearTimeout(narrTimer);narrTimer=setTimeout(()=>{n.style.display='none';},4200);}
+function toast(t){const n=$('toast');n.textContent=t;n.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>{n.style.display='none';},2800);}
+function bubble(who,text){
+  let x=S.x;
+  if(who!=='wido'){const n=(NPCS[S.room]||[]).find(p=>p[0]===who);if(n)x=n[1];}
+  const col=NPC_COL[who]||'#ffe38a';
+  bubbles=bubbles.filter(b=>b.who!==who);
+  bubbles.push({who,text,col,x,until:performance.now()/1000+Math.max(2,text.length*0.055)});
+  if(bubbles.length>3)bubbles.shift();
+}
+function card(id){
+  const c=CARDS[id];if(!c)return;
+  if(!S.cards.includes(id)){S.cards.push(id);if(!save.cards.includes(id))save.cards.push(id);writeSave();toast('Neue Wissenskarte: '+c.t);}
+  openCard(id);
+}
+function openCard(id){const c=CARDS[id];if(!c)return;$('cardTag').textContent=c.tag;$('cardTitle').textContent=c.t;$('cardText').textContent=c.x;show('cardOv');}
+
+/* ---- Overlays ---- */
+function show(id){$(id).classList.remove('hide');}
+function hide(id){$(id).classList.add('hide');}
+function overlayOpen(){return [...document.querySelectorAll('.ov')].some(o=>!o.classList.contains('hide'));}
+function closeAll(){['menu','cardsOv','cardOv','dlgOv','quizOv','endOv','teacherOv','titleOv'].forEach(hide);}
+
+/* ---- Satzzeile / Verben / Inventar ---- */
+function setSatz(t){$('satz').textContent=t;}
+function buildVerbs(){
+  const v=$('verbs');v.innerHTML='';
+  for(const [k,label] of VERBS){
+    const b=document.createElement('button');b.textContent=label;b.dataset.v=k;
+    b.onclick=()=>{ if(verb===k){verb=null;pending=null;b.classList.remove('sel');setSatz('Wido der Novize – klicke ein Verb und dann ein Ding.');}
+      else{verb=k;pending=null;[...v.children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');setSatz(label+' …');} };
+    v.appendChild(b);
+  }
+}
+function renderInv(){
+  const inv=$('inv');inv.innerHTML='';
+  for(let i=0;i<5;i++){
+    const slot=document.createElement('div');slot.className='slot'+(pending&&pending.k==='inv'&&pending.id===S.inv[i]?' sel':'');
+    if(S.inv[i]){
+      const id=S.inv[i];
+      const c=document.createElement('canvas');c.width=24;c.height=24;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+      ITEMS[id].icon(g);slot.appendChild(c);
+      slot.title=ITEMS[id].name;
+      slot.onclick=()=>clickTarget({k:'inv',id,label:ITEMS[id].name});
+    } else slot.onclick=()=>{};
+    inv.appendChild(slot);
+  }
+}
+
+/* ---- Hotspots ---- */
+function roomHotspots(){
+  const r=S.room,list=[],foot=PAINT[r].foot;
+  for(const e of (EXITS[r]||[])){ if(CH[S.ch].rooms.includes(e.to)) list.push({k:'hot',id:r+':'+e.id,x:e.x,y:e.y,w:e.w,h:e.h,label:e.label,exit:e,cx:e.x+e.w/2}); }
+  for(const h of (HOTDEF[r]||[])) list.push(Object.assign({k:'hot'},h,{id:r+':'+h.id,cx:h.cx!==undefined?h.cx:h.x+h.w/2}));
+  for(const [nid,x] of (NPCS[r]||[])) list.push({k:'hot',id:r+':npc:'+nid,npc:nid,x:x-16,y:foot-54,w:32,h:56,cx:x,label:NAME[nid]});
+  for(const [a,x] of (ANIMALS[r]||[])){
+    const big=a==='elefant';
+    list.push({k:'hot',id:r+':'+a,animal:a,x:big?x-32:x-11,y:foot-(big?46:15),w:big?66:24,h:big?48:17,cx:x,label:ALABEL[a]});
+  }
+  return list;
+}
+function findH(id){return roomHotspots().find(h=>h.id===id);}
+
+function handleClick(x,y){
+  const hs=roomHotspots();
+  for(let i=hs.length-1;i>=0;i--){const h=hs[i];
+    if(x>=h.x&&x<=h.x+h.w&&y>=h.y&&y<=h.y+h.h){clickTarget(h);return;}}
+  const p=PAINT[S.room];
+  if(verb==='gehe'){setSatz('Gehe zu …');walkThen(clamp(x,p.minX,p.maxX),()=>{});}
+}
+function clickTarget(t){
+  if(overlayOpen())return;
+  if(!t.k)t.k='hot';
+  if(!verb){
+    if(t.exit){changeRoom(t.exit.to,t.exit.nx!==undefined?t.exit.nx:t.exit.x);return;}
+    setSatz('Schau an '+t.label);
+    dispatch('schaue',t,null);return;
+  }
+  if(verb==='gehe'){
+    if(t.exit){changeRoom(t.exit.to,t.exit.nx!==undefined?t.exit.nx:t.exit.x);return;}
+    setSatz('Gehe zu '+t.label);
+    walkThen(t.cx!==undefined?t.cx:160,()=>{});return;
+  }
+  if(verb==='schaue'||verb==='nimm'||verb==='rede'){
+    setSatz(VLABEL[verb]+' '+t.label);
+    if(t.k==='hot')walkThen(t.cx,()=>dispatch(verb,t,null));else dispatch(verb,t,null);
+    return;
+  }
+  if(verb==='benutze'||verb==='gib'){
+    if(!pending){pending=t;setSatz(VLABEL[verb]+' '+t.label+' …');renderInv();return;}
+    const a=pending;pending=null;renderInv();
+    setSatz(VLABEL[verb]+' '+a.label+(verb==='gib'?' an ':' mit ')+t.label);
+    if(t.k==='hot')walkThen(t.cx,()=>dispatch(verb,a,t));else dispatch(verb,a,t);
+  }
+}
+
+/* ---- Dispatch ---- */
+function dispatch(verb,a,b){
+  if(verb==='benutze'||verb==='gib'){
+    const na=a.k==='inv'?a.id:(a.id.split(':').pop());
+    const nb=b.k==='inv'?b.id:(b.id.split(':').pop());
+    const fn=PAIRS[na+'+'+nb]||PAIRS[nb+'+'+na];
+    if(fn){fn(a,b);return;}
+    if(a.k==='inv'&&b.k==='inv'){witty(a.id,b.id);return;}
+    witty(a.k==='inv'?a.id:(b.k==='inv'?b.id:null),null,verb);
+    return;
+  }
+  const h=findH(a.id);if(!h)return;
+  let on={};
+  if(h.npc)on=NPCHAND[h.npc]||{};else if(h.animal)on=ANIMALHAND[h.animal]||{};else on=h.on||{};
+  const fn=on[verb];
+  if(fn)fn(h);
+  else if(verb==='schaue')narr('Das ist '+h.label+'.');
+  else if(verb==='nimm')narr(h.label+': Das nimmst du nicht mit.');
+  else if(verb==='rede')narr(h.label+' antwortet nicht.');
+}
+let wittyIx=0;
+function witty(idA,idB,verb){
+  const pool=(idA&&WIT[idA])||(idB&&WIT[idB])||WIT.default;
+  bubble('wido',pool[wittyIx++%pool.length]);
+}
+function invCombine(a,b){witty(a,b,'benutze');}
+
+/* ---- Gehen / Raumwechsel ---- */
+function walkThen(tx,cb){
+  const p=PAINT[S.room];
+  tx=clamp(tx,p.minX,p.maxX);
+  if(Math.abs(S.x-tx)<=6){cb();return;}
+  if(S.tx!==null&&walkCb){const old=walkCb;walkCb=()=>{old();cb();};S.tx=tx;return;}
+  S.tx=tx;walkCb=cb;
+}
+function changeRoom(to,x){
+  if(fading)return;fading=true;fade=1;
+  setTimeout(()=>{
+    S.room=to;S.x=x;S.tx=null;walkCb=null;initParts();setLoc();
+    startLoop(LOOPMAP[to]||'kloster');
+    fading=false;
+  },250);
+}
+function setLoc(){$('loc').textContent=ROOMNAME[S.room]||S.room;}
+
+/* ---- Partikel ---- */
+function initParts(){
+  parts=[];const p=PAINT[S.room];if(!p.parts)return;
+  const rng=mulberry32(ROOMSEED[S.room]+7);
+  const n={dust:26,steam:14,butterflies:5,gulls:4,sparks:10,smoke:8,birds:3}[p.parts]||10;
+  for(let i=0;i<n;i++)parts.push({x:rng()*W,y:20+rng()*130,a:rng()*6.28,v:0.2+rng()*0.8,c:['#ffe8b0','#ffffff','#ffd8a0','#c8f0ff','#e8c8ff'][Math.floor(rng()*5)]});
+}
+function updateParts(dt,t){
+  const p=PAINT[S.room];if(!p.parts)return;
+  for(const q of parts){
+    if(p.parts==='dust'){q.x+=q.v*dt*4;q.y+=Math.sin(t+q.a)*dt*3;if(q.x>W)q.x=0;}
+    else if(p.parts==='steam'){q.y-=q.v*dt*10;q.x+=Math.sin(t*2+q.a)*dt*6;if(q.y<20)q.y=130;}
+    else if(p.parts==='butterflies'){q.x+=Math.cos(t*1.7+q.a)*q.v*dt*22;q.y+=Math.sin(t*2.3+q.a)*q.v*dt*14;if(q.x<4)q.x=4;if(q.x>W-4)q.x=W-4;if(q.y<70)q.y=70;if(q.y>150)q.y=150;}
+    else if(p.parts==='gulls'){q.x+=q.v*dt*26;if(q.x>W+8)q.x=-8;q.y=26+Math.sin(t+q.a)*8+ (q.a%20);}
+    else if(p.parts==='sparks'){q.y-=q.v*dt*34;q.x+=Math.sin(t*9+q.a)*dt*10;if(q.y<88)q.y=126;if(q.x<24)q.x=24;if(q.x>94)q.x=94;}
+    else if(p.parts==='smoke'){q.y-=q.v*dt*12;q.x+=Math.sin(t*1.3+q.a)*dt*8;if(q.y<10)q.y=88;}
+    else if(p.parts==='birds'){q.x+=q.v*dt*30;if(q.x>W+6)q.x=-6;q.y=20+Math.sin(t*0.9+q.a)*10+(q.a%14);}
+  }
+}
+function drawParts(g,t){
+  const p=PAINT[S.room];if(!p.parts)return;
+  for(const q of parts){
+    if(p.parts==='dust')px(g,Math.round(q.x),Math.round(q.y),q.c);
+    else if(p.parts==='steam')R(g,Math.round(q.x),Math.round(q.y),2,2,'rgba(230,240,250,0.35)');
+    else if(p.parts==='butterflies'){const f=Math.floor(t*8+q.a)%2;R(g,Math.round(q.x),Math.round(q.y),1,1,f?q.c:'#fff');R(g,Math.round(q.x)+1,Math.round(q.y),1,1,f?'#fff':q.c);}
+    else if(p.parts==='gulls'||p.parts==='birds'){const f=Math.floor(t*6+q.a)%2;const x=Math.round(q.x),y=Math.round(q.y);px(g,x,y,'#e8ecf0');px(g,x-1,y+(f?-1:0),'#e8ecf0');px(g,x+1,y+(f?-1:0),'#e8ecf0');}
+    else if(p.parts==='sparks')px(g,Math.round(q.x),Math.round(q.y),q.c);
+    else if(p.parts==='smoke')R(g,Math.round(q.x),Math.round(q.y),3,2,'rgba(120,110,120,0.4)');
+  }
+}
+/* ---- Dynamische Effekte: Wasser, Feuer ---- */
+function drawFX(g,t){
+  const r=S.room;
+  if(r==='thermen'){for(let yy=124;yy<172;yy+=6){const off=Math.round(Math.sin(t*2+yy)*3);for(let xx=46+off;xx<272;xx+=16)R(g,xx,yy,7,1,'rgba(200,240,255,0.30)');}}
+  if(r==='kai'){for(let yy=126;yy<180;yy+=7){const off=Math.round(Math.sin(t*1.6+yy*1.3)*4);for(let xx=off;xx<W;xx+=20){const a=0.12+0.22*Math.abs(Math.sin(t*1.2+xx*0.7+yy));R(g,xx,yy,6,1,'rgba(200,240,255,'+a.toFixed(2)+')');}}}
+  if(PAINT[r].fire){
+    const a=0.10+0.06*Math.sin(t*13)+0.04*Math.sin(t*29+1);
+    if(r==='muenzwerkstatt'){ell(g,59,118,20,7,'rgba(255,150,50,'+a.toFixed(3)+')');ell(g,59,121,12,4,'rgba(255,200,80,'+(a+0.08).toFixed(3)+')');}
+    if(r==='kueche'){ell(g,75,120,22,7,'rgba(255,150,50,'+a.toFixed(3)+')');ell(g,75,124,13,4,'rgba(255,200,80,'+(a+0.08).toFixed(3)+')');}
+  }
+}
+
+/* ---- Figuren zeichnen ---- */
+const npcState={};
+function drawFigureAt(g,id,x,foot,t,walking){
+  const st=STYLES[id];const tall=!!st.tall;
+  const fr=walking?Math.floor(t*9)%6:-1;
+  const face=(id==='wido')?S.face:((S.x>=x)?1:-1);
+  const ns=npcState[id]||(npcState[id]={blinkAt:t+2+Math.random()*3,seed:Math.random()*10});
+  const blink=(t>ns.blinkAt)?((t>ns.blinkAt+0.12)?(ns.blinkAt=t+3.2+Math.random()*2.6,false):true):false;
+  const bub=bubbles.find(b=>b.who===id);
+  const talking=!!bub&&bub.until> t;
+  const mouth=talking?(Math.floor(t*7)%2):0;
+  const gesture=talking?(Math.floor(t*2.4)%2):0;
+  ell(g,x,foot+2,12,3,'rgba(10,6,20,0.30)');
+  ell(g,x,foot+3,8,2,'rgba(10,6,20,0.25)');
+  const spr=figCanvas(st,face,fr,gesture);
+  const w=spr.width,h=spr.height;
+  g.drawImage(spr,Math.round(x-w/2),Math.round(foot-h+2));
+  drawFaceBits(g,Math.round(x-w/2),Math.round(foot-h+2),face,st,mouth,blink,fr<0?0:WALK[fr%6].bob);
+}
+function drawAnimals(g,t){
+  for(const [a,x] of (ANIMALS[S.room]||[])){
+    const foot=PAINT[S.room].foot;
+    ell(g,x,foot+2,13,3,'rgba(10,6,20,0.30)');
+    if(a==='huhn')drawHen(g,Math.round(x),foot, t+ (x%7), null);
+    else if(a==='ziege')drawGoat(g,Math.round(x),foot,t);
+    else if(a==='elefant')drawElephant(g,Math.round(x),foot,t,!S.flags.elefantRolle);
+  }
+}
+
+/* ---- Render ---- */
+function render(t){
+  const g=ctx;
+  g.drawImage(getBG(S.room),0,0);
+  drawFX(g,t);
+  drawAnimals(g,t);
+  const figs=[];
+  for(const [nid,x] of (NPCS[S.room]||[]))figs.push({id:nid,x});
+  figs.push({id:'wido',x:S.x});
+  figs.sort((a,b)=>a.x-b.x);
+  const foot=PAINT[S.room].foot;
+  for(const f of figs)drawFigureAt(g,f.id,f.x,foot,t,f.id==='wido'&&S.tx!==null);
+  drawParts(g,t);
+  for(const b of bubbles){
+    if(b.until<t)continue;
+    const fy=foot-56-(STYLES[b.who]&&STYLES[b.who].tall?8:0);
+    drawSpeech(g,b.x,fy- (bubbles.filter(o=>o.who===b.who).indexOf(b))*10,b.text,b.col);
+  }
+  bubbles=bubbles.filter(b=>b.until>t);
+  if(fade>0){R(g,0,0,W,H,'rgba(0,0,0,'+clamp(fade,0,1).toFixed(2)+')');}
+}
+let lastTs=0;
+function frame(ts){
+  const t=ts/1000;const dt=Math.min(0.05,lastTs?(t-lastTs):0.016);lastTs=t;
+  if(!fading&&fade>0)fade=Math.max(0,fade-dt*4);
+  else if(fading)fade=Math.min(1,fade+dt*4);
+  if(S.tx!==null){
+    const p=PAINT[S.room];
+    const dir=Math.sign(S.tx-S.x);
+    S.x+=dir*Math.min(Math.abs(S.tx-S.x),70*dt);
+    S.face=dir||S.face;
+    if(Math.abs(S.tx-S.x)<=1){S.x=S.tx;S.tx=null;const cb=walkCb;walkCb=null;if(cb)cb();}
+  }
+  updateParts(dt,t);
+  render(t);
+  requestAnimationFrame(frame);
+}
+
+/* ---- Dialoge ---- */
+function say(who,text,opts){
+  show('dlgOv');
+  const wn=$('dlgWho');wn.textContent=who;wn.style.color=NPC_COL[who]||'#ffe38a';
+  $('dlgText').textContent=text;
+  const box=$('dlgOpts');box.innerHTML='';
+  (opts||[]).forEach(o=>{
+    const b=document.createElement('button');b.className='dlgOpt';b.textContent=o.t;
+    b.onclick=()=>{sfx('klimper');if(o.say){{say(o.say[0],o.say[1],o.say[2]);return;}} if(o.next)o.next();};
+    box.appendChild(b);
+  });
+}
+function closeDlg(){hide('dlgOv');}
+
+/* ---- Quiz ---- */
+let quizN=0,quizIx=0;
+function startQuiz(n){
+  quizN=n;quizIx=0;show('quizOv');$('quizTitle').textContent=QUIZ[n].title+' – Frage '+(1)+' von '+QUIZ[n].qs.length;
+  renderQuizQ();
+}
+function renderQuizQ(){
+  const q=QUIZ[quizN].qs[quizIx];
+  $('quizTitle').textContent=QUIZ[quizN].title+' – Frage '+(quizIx+1)+' von '+QUIZ[quizN].qs.length;
+  $('quizQ').textContent=q.q;$('quizInfo').textContent='';
+  const box=$('quizOpts');box.innerHTML='';
+  q.o.forEach((opt,i)=>{
+    const b=document.createElement('button');b.className='quizOpt';b.textContent=opt;
+    b.onclick=()=>{
+      if(i===q.a){b.classList.add('ok');sfx('success');$('quizInfo').textContent='Richtig! '+q.w;
+        [...box.children].forEach(x=>x.disabled=true);
+        const nx=document.createElement('button');nx.className='quizOpt';nx.textContent=(quizIx<QUIZ[quizN].qs.length-1?'Nächste Frage':'Zur Abschlusskarte');
+        nx.onclick=()=>{quizIx++;if(quizIx<QUIZ[quizN].qs.length)renderQuizQ();else{finishQuiz();}};
+        box.appendChild(nx);
+      }else{b.classList.add('bad');sfx('thump');$('quizInfo').textContent='Nicht ganz. Versuch es noch einmal!';}
+    };
+    box.appendChild(b);
+  });
+}
+function finishQuiz(){hide('quizOv');show('endOv');$('endDoneBtn').classList.remove('hide');}
+
+/* ---- Kapitel-Abschluss ---- */
+function endCh(n){
+  const c=CH[n];
+  $('endTitle').textContent='Kapitel '+n+' abgeschlossen: '+c.title;
+  $('endText').textContent='Ort: '+c.place+', '+c.date+'. Du hast die Aufgabe gelöst. Jetzt das Quiz!';
+  $('endDisk').textContent=c.disk;
+  $('endDoneBtn').classList.add('hide');
+  show('endOv');
+}
+
+/* ---- Menü / Kapitelwahl ---- */
+function renderMenu(){
+  const list=$('chList');list.innerHTML='';
+  for(let n=1;n<=4;n++){
+    const c=CH[n];const locked=n>1&&!save.done[n-1];
+    const b=document.createElement('button');b.className='menuBtn'+(save.done[n]?' done':'')+(locked?' locked':'');
+    b.innerHTML='Kapitel '+n+' – '+c.title+(save.done[n]?'  ✓':'')+'<br><small>'+c.place+' · '+c.date+(locked?' · (schließe Kapitel '+(n-1)+' ab)':'')+'</small>';
+    if(!locked)b.onclick=()=>{startChapter(n);};
+    list.appendChild(b);
+  }
+}
+function showMenu(){renderMenu();show('menu');}
+function startChapter(n){
+  S.ch=n;S.flags={};S.inv=CH[n].inv.slice();S.room=CH[n].start;S.x=160;S.tx=null;
+  pending=null;verb=null;[...document.querySelectorAll('#verbs button')].forEach(x=>x.classList.remove('sel'));
+  renderInv();initParts();setLoc();closeAll();setSatz('Kapitel '+n+': '+CH[n].title);
+  startLoop(LOOPMAP[S.room]||'kloster');
+  $('titleTag').textContent='Kapitel '+n+' · '+CH[n].date;
+  $('titleH').textContent=CH[n].title;
+  $('titleP').textContent=CH[n].place+' – '+CH[n].date;
+  show('titleOv');
+}
+
+/* ---- Wissenskarten-Sammlung ---- */
+function openCards(){
+  const g=$('kartenGrid');g.innerHTML='';
+  if(!save.cards.length){g.innerHTML='<p>Noch keine Wissenskarten gesammelt. Spiele ein Kapitel!</p>';}
+  for(const id of save.cards){
+    const c=CARDS[id];if(!c)continue;
+    const b=document.createElement('button');b.className='karteBtn';b.textContent=c.t;
+    b.onclick=()=>{hide('cardsOv');openCard(id);};
+    g.appendChild(b);
+  }
+  show('cardsOv');
+}
+
+/* ---- Lehrerseite ---- */
+function openTeacher(){
+  const p=$('teacherPanel');let h='<h1>Lehrerseite</h1><p>„Wido der Novize“ – Point-and-Click-Abenteuer, Frankenreich im Jahr 802. Zielgruppe: Gemeinschaftsschule Saarland, Einheit Frühmittelalter. Kein Tod, keine Sackgassen, kein Zeitdruck; der Hinweis-Knopf zeigt je nach Spielstand den nächsten Schritt.</p>';
+  for(let n=1;n<=4;n++){const c=CH[n];
+    h+='<div class="teacherSec"><h2>Kapitel '+n+': '+c.title+'</h2><p><b>'+c.place+', '+c.date+'</b></p><p>'+c.intro+'</p>';
+    h+='<p><b>Diskussionsfrage:</b> '+c.disk+'</p><p><b>Lösungsweg:</b></p><ol>';
+    for(const s of LOESUNG[n])h+='<li>'+s+'</li>';
+    h+='</ol></div>';
+  }
+  h+='<div class="teacherSec"><h2>Alle Wissenskarten</h2>';
+  for(const id in CARDS){h+='<p><b>'+CARDS[id].t+'</b> ('+CARDS[id].tag+')<br>'+CARDS[id].x+'</p>';}
+  h+='</div><div class="teacherSec"><h2>Diskussionsfragen (alle Kapitel)</h2><ol>';
+  for(let n=1;n<=4;n++)h+='<li>'+CH[n].disk+'</li>';
+  h+='</ol></div>';
+  h+='<button class="ovBtn" id="teacherClose">Schließen</button>';
+  p.innerHTML=h;
+  $('teacherClose').onclick=()=>hide('teacherOv');
+  show('teacherOv');
+}
+
+/* ---- Hinweis ---- */
+function hint(){const h=HINTS[S.ch];narr(h?h():'Kein Hinweis nötig – du machst das schon!');}
+
+/* ---- UI verdrahten ---- */
+function wireUI(){
+  buildVerbs();renderInv();setLoc();
+  $('bHint').onclick=()=>{if(!overlayOpen())hint();};
+  $('bCards').onclick=()=>openCards();
+  $('bSound').onclick=()=>{save.sound=!save.sound;writeSave();updateSoundBtn();if(save.sound)startLoop(LOOPMAP[S.room]||'kloster');else stopLoop();};
+  $('bMenu').onclick=()=>{showMenu();};
+  $('bTeacher').onclick=()=>{openTeacher();};
+  $('bAllCards').onclick=()=>{hide('menu');openCards();};
+  $('cardsClose').onclick=()=>{hide('cardsOv');if(S.ch&&$('menu').classList.contains('hide')===false)show('menu');};
+  $('cardClose').onclick=()=>hide('cardOv');
+  $('endQuizBtn').onclick=()=>{hide('endOv');startQuiz(S.ch);};
+  $('endDoneBtn').onclick=()=>{save.done[S.ch]=true;writeSave();closeAll();showMenu();};
+  $('titleBtn').onclick=()=>{hide('titleOv');narr(CH[S.ch].intro);};
+  cv.addEventListener('pointerdown',e=>{
+    if(overlayOpen())return;
+    const r=cv.getBoundingClientRect();
+    handleClick((e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H);
+  });
+}
+function updateSoundBtn(){$('bSound').textContent='Ton: '+(save.sound?'an':'aus');}
+/* ================= 10. Räume: NPCs, Tiere, Ausgänge, Hotspots ================= */
+const NAME={wido:'Wido',walto:'Bruder Walto',ratold:'Meier Ratold',wache:'Wache',gisla:'Bäuerin Gisla',isaak:'Isaak',einhard:'Einhard',karl:'Kaiser Karl',zollner:'Zöllner',ketil:'Ketil',wibrand:'Händler Wibrand',ermenrich:'Münzmeister Ermenrich',hiltrud:'Hiltrud',grimbald:'Bruder Grimbald',kuno:'Kuno',abt:'Abt',hartmut:'Bruder Hartmut'};
+const ALABEL={huhn:'Huhn Chlothilde',ziege:'Die Ziege',elefant:'Elefant Abul Abbas'};
+const NPCS={
+  skriptorium:[['walto',104]],
+  koenigshof:[['ratold',128],['wache',238]],
+  gislasHufe:[['gisla',122]],
+  pfalzAachen:[['isaak',80],['wache',266]],
+  pfalzKapelle:[['einhard',118]],
+  thermen:[['karl',196]],
+  kai:[['ketil',88],['zollner',238]],
+  markt:[['wibrand',118],['hiltrud',246]],
+  muenzwerkstatt:[['ermenrich',206],['kuno',100]],
+  garten:[],
+  infirmarium:[['abt',62],['grimbald',122],['hartmut',224]],
+  kueche:[['hiltrud',228]]
+};
+const ANIMALS={koenigshof:[['huhn',92],['ziege',180]],pfalzAachen:[['elefant',200]]};
+const EXITS={
+  skriptorium:[{id:'aus',to:'koenigshof',x:294,y:96,w:22,h:44,label:'Zum Königshof',nx:44}],
+  koenigshof:[{id:'links',to:'skriptorium',x:2,y:104,w:22,h:52,label:'Zum Skriptorium',nx:272},
+              {id:'rechts',to:'gislasHufe',x:296,y:104,w:22,h:52,label:'Zu Gislas Hufe',nx:56}],
+  gislasHufe:[{id:'links',to:'koenigshof',x:2,y:106,w:22,h:52,label:'Zum Königshof',nx:272}],
+  pfalzAachen:[{id:'kapelle',to:'pfalzKapelle',x:40,y:58,w:42,h:58,label:'Zur Pfalzkapelle',nx:250},
+               {id:'bad',to:'thermen',x:238,y:54,w:44,h:62,label:'Zu den warmen Bädern',nx:56}],
+  pfalzKapelle:[{id:'raus',to:'pfalzAachen',x:292,y:56,w:24,h:60,label:'Zurück in die Pfalz',nx:70}],
+  thermen:[{id:'raus',to:'pfalzAachen',x:2,y:60,w:24,h:56,label:'Zurück in die Pfalz',nx:250}],
+  kai:[{id:'markt',to:'markt',x:292,y:88,w:24,h:44,label:'Zum Markt',nx:44}],
+  markt:[{id:'kai',to:'kai',x:2,y:88,w:24,h:44,label:'Zum Kai',nx:270},
+         {id:'muenze',to:'muenzwerkstatt',x:292,y:96,w:24,h:40,label:'Zur Münzwerkstatt',nx:270}],
+  muenzwerkstatt:[{id:'markt',to:'markt',x:292,y:96,w:24,h:40,label:'Zum Markt',nx:270}],
+  infirmarium:[{id:'garten',to:'garten',x:292,y:96,w:24,h:40,label:'Zum Klostergarten',nx:48}],
+  garten:[{id:'infir',to:'infirmarium',x:2,y:88,w:24,h:40,label:'Zum Infirmarium',nx:270},
+          {id:'kueche',to:'kueche',x:292,y:88,w:24,h:40,label:'Zur Klosterküche',nx:52}],
+  kueche:[{id:'garten',to:'garten',x:2,y:92,w:24,h:40,label:'Zum Klostergarten',nx:270}]
+};
+
+const HOTDEF={
+ skriptorium:[
+  {id:'regal',x:8,y:14,w:80,h:90,label:'Bücherregal',on:{schaue:()=>narr('Bücher in sieben Farben, Gold auf jedem Schnitt. Bruder Walto hat jedes gelesen – zweimal.'),nimm:()=>bubble('wido','Ein Buch allein brauche ich nicht. Ich brauche Pergament.')}},
+  {id:'pergament',x:154,y:88,w:20,h:10,label:'Pergament',on:{schaue:()=>narr('Frisches Pergament vom Regal. Teuer und wertvoll.'),nimm:()=>{if(has('pergament'))narr('Du hast schon Pergament.');else{give('pergament');narr('Du nimmst ein Blatt Pergament.');}}}},
+  {id:'schabeisen',x:186,y:88,w:18,h:8,label:'Schabeisen',on:{schaue:()=>narr('Ein kleines Eisen zum Abschaben von Pergament.'),nimm:()=>{if(has('schabeisen'))narr('Schon dabei.');else{give('schabeisen');narr('Du nimmst das Schabeisen.');}}}},
+  {id:'tintenfass',x:172,y:84,w:11,h:12,label:'Tintenfass',on:{schaue:()=>narr('Schwarze Tinte. Riecht nach Eiche und Kupfer.'),nimm:()=>{if(has('tinte'))narr('Schon dabei.');else{give('tinte');narr('Du nimmst das Tintenfass.');}}}},
+  {id:'feder',x:200,y:88,w:14,h:7,label:'Schreibfeder',on:{schaue:()=>narr('Eine Gänsefeder, zugespitzt.'),nimm:()=>{if(has('feder'))narr('Schon dabei.');else{give('feder');narr('Du nimmst die Feder.');}}}},
+  {id:'pult',x:146,y:94,w:80,h:36,label:'Schreibpult',on:{schaue:()=>narr('Dein Pult. Hier entsteht das neue Urbar.')}},
+  {id:'fenster',x:204,y:10,w:62,h:84,label:'Rundbogenfenster',on:{schaue:()=>narr('Sonnenlicht fällt als Kegel auf den Boden. Draußen: Wiese und weiter Himmel.')}}
+ ],
+ koenigshof:[
+  {id:'hausL',x:16,y:40,w:70,h:68,label:'Fachwerkhaus',on:{schaue:()=>narr('Das Haus des Meiers. Ratold wohnt hier – wenn die Ziege ihn reinlässt.')}},
+  {id:'hausR',x:236,y:46,w:66,h:64,label:'Fachwerkhaus',on:{schaue:()=>narr('Hier wohnen die Königsboten, solange sie warten.')}},
+  {id:'fass',x:202,y:118,w:22,h:24,label:'Fass',on:{schaue:()=>narr('Ein Fass mit... etwas. Besser nicht riechen.'),nimm:()=>narr('Viel zu schwer.')}},
+  {id:'bank',x:248,y:124,w:38,h:16,label:'Bank',on:{schaue:()=>narr('Eine Bank zum Warten. Die Boten warten schon den ganzen Morgen.')}}
+ ],
+ gislasHufe:[
+  {id:'haus',x:178,y:46,w:96,h:70,label:'Gislas Haus (Strohdach)',on:{schaue:()=>narr('Strohdach, Lehmfachwerk, kleiner Garten. Hier wohnt Bäuerin Gisla.')}},
+  {id:'beete',x:20,y:122,w:146,h:22,label:'Gartenbeete',on:{schaue:()=>narr('Rüben, Bohnen und Kräuter in sauberen Reihen. Gisla arbeitet jeden Tag hier.')}},
+  {id:'zaun',x:16,y:110,w:148,h:12,label:'Zaun',on:{schaue:()=>narr('Ein einfacher Lattenzaun. Dahinter die Wiese mit Schmetterlingen.')}}
+ ],
+ pfalzAachen:[
+  {id:'halleL',x:6,y:26,w:114,h:90,label:'Steinbau',on:{schaue:()=>narr('Helle Quader aus der Region. Hier wohnt der Hofstaat.')}},
+  {id:'halleR',x:204,y:22,w:110,h:94,label:'Steinbau mit Bronzetür',on:{schaue:()=>narr('Die große Halle. Banner in Rot und Gold. Ein Elefant steht im Hof!')}},
+  {id:'saeulen',x:124,y:54,w:72,h:64,label:'Säulen',on:{schaue:()=>narr('Hohe Säulen tragen das Dach der Vorhalle.')}}
+ ],
+ pfalzKapelle:[
+  {id:'tuer',x:132,y:38,w:56,h:90,label:'Bronzetür',on:{schaue:()=>narr('Schwere Bronzetür mit goldenen Bändern. Dahinter das Mosaik.')}},
+  {id:'mosaik',x:0,y:126,w:320,h:54,label:'Mosaikboden',on:{schaue:()=>narr('Gold, Purpur und Weiß – der Boden glänzt wie ein Sternenhimmel.')}},
+  {id:'pult',x:90,y:92,w:38,h:34,label:'Pult mit Feder',on:{schaue:()=>narr('Einhards Pult. Eine besondere Feder liegt darauf – blau schimmert die Tinte.'),nimm:()=>{if(has('federE'))narr('Du hast Einhards Feder schon.');else{give('federE');narr('Du nimmst Einhards Feder. Sie riecht nach Weihrauch.');sfx('klimper');}}}}
+ ],
+ thermen:[
+  {id:'wasser',x:40,y:116,w:240,h:60,label:'Warmes Becken',on:{schaue:()=>{card('thermen');sfx('splash');narr('Das Wasser ist warm und klar. Wellen kräuseln. Karl badet gern hier.');}}},
+  {id:'saeulen',x:100,y:36,w:16,h:90,label:'Säulen',on:{schaue:()=>narr('Hohe Säulen aus grauem Stein. Darüber Fackeln.')}},
+  {id:'dampf',x:60,y:90,w:200,h:30,label:'Dampf',on:{schaue:()=>narr('Dampf steigt über dem Wasser auf. Es riecht nach Schwefel und Minze.')}}
+ ],
+ kai:[
+  {id:'schiff',x:28,y:88,w:96,h:36,label:'Friesisches Schiff',on:{schaue:()=>narr('Ein breites Handelsschiff mit rotem Segel. Es kommt aus Friesland – mit Wollmänteln an Bord.')}},
+  {id:'schiff2',x:178,y:80,w:96,h:34,label:'Fähre',on:{schaue:()=>narr('Die Fähre pendelt über den Rhein. Möwen kreisen darüber.')}},
+  {id:'wasser',x:0,y:124,w:320,h:56,label:'Der Rhein',on:{schaue:()=>narr('Grünes Wasser, Glitzern in der Sonne. Der Rhein verbindet Dorestad mit der weiten Welt.')}}
+ ],
+ markt:[
+  {id:'stand1',x:16,y:88,w:70,h:44,label:'Stand (rote Stoffe)',on:{schaue:()=>narr('Rote Wolle und Leinen. Feine Ware aus dem Westen.')}},
+  {id:'stand2',x:116,y:92,w:70,h:42,label:'Wibrands Stand',on:{schaue:()=>narr('Hier verkauft Wibrand friesische Mäntel – blau mit goldenem Saum. Sehr begehrt in Bagdad.')}},
+  {id:'waage',x:160,y:102,w:26,h:30,label:'Waage',on:{schaue:()=>narr('Die Handelswaage. Präzise wie ein Urbar. 12 Denare für drei Mäntel.')}},
+  {id:'kisten',x:192,y:138,w:26,h:18,label:'Kisten',on:{schaue:()=>narr('Kisten mit Salz und Bernstein aus dem Norden.')}}
+ ],
+ muenzwerkstatt:[
+  {id:'esse',x:22,y:58,w:74,h:70,label:'Esse',on:{schaue:()=>narr('Das Feuer flackert orange. Funken tanzen. Hier wird Silber geschmolzen.')}},
+  {id:'amboss',x:146,y:106,w:34,h:26,label:'Amboss',on:{schaue:()=>narr('Schwerer Amboss aus Eisen. Hier hämmert man Silber dünn.')}},
+  {id:'stempel',x:240,y:84,w:24,h:18,label:'Münzstempel',on:{schaue:()=>{card('denar');narr('Auf dem Stempel stehen Buchstaben – spiegelverkehrt! Auf der geprägten Münze stehen sie dann richtig herum. So prägt der König den Denar.');}}},
+  {id:'silber',x:216,y:92,w:16,h:9,label:'Silberklumpen',on:{schaue:()=>narr('Roher Silberklumpen. Glänzt kühl und schwer.'),nimm:()=>{if(has('silber'))narr('Schon dabei.');else{give('silber');narr('Du nimmst den Silberklumpen. Er ist kalt.');sfx('clink');}}}},
+  {id:'tisch',x:206,y:100,w:86,h:30,label:'Arbeitstisch',on:{schaue:()=>narr('Hier liegen Stempel, Hammer und fertige Münzen.')}}
+ ],
+ garten:[
+  {id:'beetSalbei',x:16,y:100,w:60,h:22,label:'Salbeibeet',on:{schaue:()=>narr('Salbei – grau-grün und stark duftend. Gut gegen Husten.'),nimm:()=>{if(has('salbei'))narr('Genug Salbei gesammelt.');else{give('salbei');narr('Du pflückst Salbei.');}}}},
+  {id:'beetMinze',x:86,y:100,w:60,h:22,label:'Minzbeet',on:{schaue:()=>narr('Minze – frisch und kühl. Gut für den Magen.'),nimm:()=>{if(has('minze'))narr('Genug Minze gesammelt.');else{give('minze');narr('Du pflückst Minze.');}}}},
+  {id:'beet3',x:156,y:100,w:60,h:22,label:'Kräuterbeet',on:{schaue:()=>narr('Thymian und Ringelblumen. Die Bienen lieben sie.')}},
+  {id:'korb',x:232,y:102,w:34,h:28,label:'Bienenkorb',on:{schaue:()=>narr('Ein Strohkorb voller Bienen. Sie summen zufrieden. Honig gibt es hier!'),nimm:()=>{if(has('honig'))narr('Du hast schon Honig.');else{give('honig');narr('Vorsichtig: Du nimmst eine Honigwabe.');sfx('hum');}}}}
+ ],
+ infirmarium:[
+  {id:'bett',x:178,y:94,w:90,h:34,label:'Krankenbett',on:{schaue:()=>narr('Bruder Hartmuts Bett. Die Decke ist ordentlich gefaltet – trotz Fieber.')}},
+  {id:'buch',x:82,y:94,w:36,h:16,label:'Lorscher Arzneibuch',on:{schaue:()=>{card('arzneibuch');flag('rezept');narr('Aufgeschlagen auf dem Rezept: „Gegen Fieber: Salbei, Minze und Honig in heißem Wasser aufkochen.“');},nimm:()=>narr('Das Arzneibuch bleibt im Infirmarium – es ist zu kostbar zum Mitnehmen.')}},
+  {id:'kraeuter',x:126,y:0,w:26,h:30,label:'Hängende Kräuter',on:{schaue:()=>narr('Getrocknete Kräuterbündel an der Wand. Sie riechen stark.')}},
+  {id:'fenster',x:22,y:16,w:42,h:56,label:'Fenster',on:{schaue:()=>narr('Kleines Fenster mit Blick in den Garten. Frische Luft tut Kranken gut.')}}
+ ],
+ kueche:[
+  {id:'herd',x:28,y:62,w:94,h:66,label:'Herd',on:{schaue:()=>narr('Großes Feuer im Herd. Der Kessel hängt direkt darüber – das Wasser kocht schon.')}},
+  {id:'kessel',x:56,y:80,w:40,h:22,label:'Kessel',on:{schaue:()=>narr('Der schwarze Kessel über dem Feuer. Heißes Wasser blubbert darin. Hier kommt der Heiltrank hinein.')}},
+  {id:'regal',x:148,y:16,w:134,h:52,label:'Regal mit Töpfen',on:{schaue:()=>narr('Töpfe, Krüge und Schüsseln – die Klosterküche ist gut ausgestattet.')}},
+  {id:'tisch',x:168,y:102,w:84,h:30,label:'Küchentisch',on:{schaue:()=>narr('Hier wird geschnitten, gerührt und gekocht. Heute: Heiltrank für Hartmut.')}}
+ ]
+};
+
+/* ================= 11. NPC- und Tier-Handler ================= */
+const NPCHAND={
+  walto:{schaue:()=>narr('Bruder Walto, der Bibliothekar. Er kennt jedes Buch im Regal.'),
+    rede:()=>say('Bruder Walto','Wido! Das Urbar ist weg? Dann schreib ein neues. Pergament abschaben mit dem Schabeisen – das ist ein Palimpsest. Und vergiss nicht: erst Gislas Abgaben holen!',[
+      {t:'Danke, Bruder Walto!',next:()=>{card('palimpsest');closeDlg();}},
+      {t:'Was ist ein Palimpsest nochmal?',next:()=>say('Bruder Walto','Altes Pergament wird abgeschabt und neu beschrieben. So sparte man teure Haut. Man nennt das Palimpsest.',[{t:'Verstanden!',next:()=>{card('palimpsest');closeDlg();}}])}
+    ])},
+  ratold:{schaue:()=>narr('Meier Ratold. Rote Haare, rote Wangen, rote Ziege.'),
+    rede:()=>{flag('ratold');say('Meier Ratold','Wido! Meine Ziege hat das Urbar gefressen! Die Königsboten kommen heute noch. Hast du ein neues geschrieben?',[
+      {t:'Noch nicht. Was soll ich tun?',next:()=>say('Meier Ratold','Nimm Pergament, schabe die alte Schrift ab, tunk die Feder in Tinte – und schreib drauf, was Gisla schuldet. Frag sie auf ihrer Hufe, rechts vom Hof!',[
+        {t:'Verstanden!',next:()=>{closeDlg();}},
+        {t:'Warum gibt es eigentlich Stände?',next:()=>say('Meier Ratold','Man sagt: Der Klerus betet, der Adel kämpft, wir Bauern arbeiten. Gott soll das so gewollt haben. Ob das stimmt? Frag die Gelehrten!',[{t:'Interessant...',next:()=>{card('staende');closeDlg();}}])}
+      ])},
+      {t:'Die Ziege soll zahlen!',next:()=>say('Meier Ratold','Die Ziege zahlt in... Ziegenmilch. Komm, wir müssen schreiben!',[{t:'Okay, okay.',next:()=>{closeDlg();}}])}
+    ]);}},
+  wache:{schaue:()=>narr('Eine Wache in roter Tunika mit Helm und Speer.'),
+    rede:()=>{flag('wacheRede');say('Wache','Halt! Ich bin des Kaisers Bote. Das Urbar fehlt – die Ziege hat es gefressen. Bring mir ein neues, sonst gibt es Ärger!',[
+      {t:'Ich schreibe schon daran.',next:()=>{closeDlg();}},
+      {t:'Warum dient ihr dem Kaiser?',next:()=>say('Wache','Das Lehnswesen! Der König gibt uns Land und Schutz – dafür leisten wir Kriegsdienst und Rat. So regiert er das große Reich.',[{t:'Aha!',next:()=>{card('lehnswesen');closeDlg();}}])}
+    ]);}},
+  gisla:{schaue:()=>narr('Bäuerin Gisla. Blaues Kleid, helles Kopftuch, fleißige Hände.'),
+    rede:()=>{flag('gisla');say('Bäuerin Gisla','Guten Tag, Wido! Was ich meinem Herrn schuld? Zwei Scheffel Korn, ein Huhn – und drei Tage Fronarbeit im Jahr. Schreib das ordentlich ins Urbar!',[
+      {t:'Zwei Scheffel, ein Huhn, drei Tage. Merke ich mir!',next:()=>{card('grundherrschaft');narr('Gisla: „Danke, dass du zuhörst, Novize!“');closeDlg();}},
+      {t:'Warum musst du Abgaben zahlen?',next:()=>say('Bäuerin Gisla','Grundherrschaft, Wido. Ich bearbeite das Land des Herrn. Dafür zahle ich Abgaben und leiste Frondienst – und bekomme Schutz. So läuft das seit Generationen.',[{t:'Danke für die Erklärung!',next:()=>{card('grundherrschaft');closeDlg();}}])}
+    ]);}},
+  isaak:{schaue:()=>narr('Isaak aus Bagdad. Turban, dunkler Bart – und neben ihm ein Elefant!'),
+    rede:()=>{flag('isaak');say('Isaak','Wido! Ich komme gerade aus Bagdad – und ich bringe Abul Abbas mit, den Elefanten des Kalifen! Schau ihn dir an. Die Pergamentrolle hält er im Rüssel. Schreib alles für den Kaiser auf!',[
+      {t:'Ein Elefant! Unglaublich.',next:()=>{card('karl');say('Isaak','Karl regiert ein riesiges Reich: Franken, Sachsen, Italien, und seit 800 ist er Kaiser. Sein Hof ist in Aachen. Aber erzähl ihm vom Elefanten – das interessiert ihn brennend!',[{t:'Wird gemacht!',next:()=>{closeDlg();}}])}},
+      {t:'Wer ist der Kalif?',next:()=>say('Isaak','Harun ar-Raschid, Herrscher von Bagdad – ein Zentrum von Wissenschaft und Handel. Er schickte Karl den Elefanten als Geschenk. Diplomatie auf vier Beinen!',[{t:'Faszinierend!',next:()=>{closeDlg();}}])}
+    ]);}},
+  einhard:{schaue:()=>narr('Einhard, der Gelehrte. Blaues Gewand, wache Augen.'),
+    rede:()=>{flag('einhard');say('Einhard','Wido! Schreib den Reisebericht über Abul Abbas für den Kaiser. Nimm meine Feder vom Pult – sie schreibt besonders fein.',[
+      {t:'Danke, Einhard!',next:()=>{card('einhard');closeDlg();}},
+      {t:'Was hast du über Karl geschrieben?',next:()=>say('Einhard','Die „Vita Karoli Magni“ – sein Leben. Ich war am Hof dabei, also weiß ich es genau. Oder? Quellen sollte man immer mit Vorsicht lesen...',[{t:'Stimmt!',next:()=>{card('einhard');closeDlg();}}])}
+    ]);}},
+  karl:{schaue:()=>narr('Kaiser Karl der Große. Weißes Haar, weißer Bart, helles Gewand. Groß und würdevoll.'),
+    rede:()=>{flag('karl');say('Kaiser Karl','Wido, mein Novize! Die warmen Bäder tun mir gut. Aber hör: Isaak erzählte von einem Elefanten. Hast du den Reisebericht schon geschrieben? Zeig ihn mir!',[
+      {t:'Noch nicht, Majestät.',next:()=>{narr('Karl nickt freundlich: „Dann schreib erst – Pergament, Feder, Tinte. Ich warte im Bad.“');closeDlg();}},
+      {t:'Waren Sie ein großer Herrscher?',next:()=>say('Kaiser Karl','Groß? Ich habe das Reich vergrößert, Schulen gebaut, Münzen prägen lassen... Ob ich „groß“ war, sollen andere beurteilen. Einhard schreibt es auf – lies seine Vita kritisch!',[{t:'Ja, Majestät!',next:()=>{closeDlg();}}])}
+    ]);}},
+  zollner:{schaue:()=>narr('Der Zöllner. Strenger Blick, Münzbeutel am Gürtel.'),
+    rede:()=>{flag('zollRede');say('Zöllner','Halt, Händler! Zoll zahlen, sonst keine Fahrt! Zwei Denare für die Ladung – das ist des Königs Recht.',[
+      {t:'Zwei Denare. Verstanden.',next:()=>{card('zoll');closeDlg();}},
+      {t:'Warum kostet das etwas?',next:()=>say('Zöllner','Der Zoll geht an den König. Davon lebt der Hof – und er schützt unsere Straßen und den Handel. Ohne Zoll keine Ordnung.',[{t:'Aha.',next:()=>{card('zoll');closeDlg();}}])}
+    ]);}},
+  ketil:{schaue:()=>narr('Ketil, der Seefahrer. Kegelmütze, roter Umhang – riecht nach Salz und Wind.'),
+    rede:()=>{flag('ketil');say('Ketil','Wido! Der Kalif in Bagdad will drei friesische Mäntel! Bring sie mir zum Kai, dann fahre ich los. Wibrand auf dem Markt verkauft sie – aber frag nach dem Preis, und denk an den Zoll!',[
+      {t:'Ich kümmere mich drum!',next:()=>{card('dorestad');closeDlg();}},
+      {t:'Was ist Dorestad?',next:()=>say('Ketil','Unser Handelsplatz am Rhein – einer der größten Europas! Hier treffen sich Friesen, Franken, Sachsen und Fernhändler. Pelze, Bernstein, Wein, Stoffe... und bald: Mäntel für Bagdad!',[{t:'Wow!',next:()=>{card('dorestad');closeDlg();}}])}
+    ]);}},
+  wibrand:{schaue:()=>narr('Händler Wibrand. Bunter Umhang, geschäftiger Blick.'),
+    rede:()=>{flag('wibrand');say('Wibrand','Friesische Mäntel? Blau mit goldenem Saum – die begehrtesten Stoffe weit und breit! Drei Stück kosten zwölf Denare. Silberdenare, bitte – keine fremde Münze!',[
+      {t:'Zwölf Denare. Notiert!',next:()=>{card('handel');closeDlg();}},
+      {t:'Warum so teuer?',next:()=>say('Wibrand','Weil sie aus Friesland kommen – per Schiff den Rhein hinauf! Und der Kalif in Bagdad zahlt das Doppelte. Handel lohnt sich.',[{t:'Verstehe.',next:()=>{card('handel');closeDlg();}}])}
+    ]);}},
+  armenrich:{schaue:()=>narr('Münzmeister Ermenrich. Leder-Schürze, kräftige Arme.'),
+    rede:()=>{flag('ermenrich');say('Ermenrich','Silber prägen, Novize? Nimm den Klumpen, hämmere ihn auf dem Amboss zur Platte – und dann unter den Münzstempel. Aber Achtung: Die Buchstaben auf dem Stempel stehen spiegelverkehrt, damit die Münze richtig herum lesbar ist!',[
+      {t:'Verstanden, Meister!',next:()=>{closeDlg();}}
+    ]);}},
+  hiltrud:{schaue:()=>narr('Hiltrud aus der Küche. Kopftuch, freundliches Lachen.'),
+    rede:()=>say('Hiltrud','Wido! Heute gibt es Eintopf – und für Bruder Hartmut einen heißen Trank. Hast du die Kräuter schon? Der Kessel kocht schon in der Küche!',[{t:'Bin dabei!',next:()=>{closeDlg();}}])},
+  grimbald:{schaue:()=>narr('Bruder Grimbald pflegt die Kranken im Infirmarium.'),
+    rede:()=>say('Bruder Grimbald','Hartmut hat Fieber, armer Kerl. Das Rezept steht im Lorscher Arzneibuch am Lesepult: Salbei, Minze, Honig – in heißem Wasser. Brau es in der Küche!',[{t:'Wird gemacht!',next:()=>{closeDlg();}}])},
+  kuno:{schaue:()=>narr('Kuno, der Lehrling. Klein, flink, immer in Bewegung.'),
+    rede:()=>say('Kuno','Der Amboss klingt heute besonders schön, findest du nicht? Ping! Plong! Meister Ermenrich sagt, gute Münzen beginnen mit gutem Silber.',[{t:'Ping plong!',next:()=>{closeDlg();}}])},
+  abt:{schaue:()=>narr('Der Abt. Dunkle Kutte, weinroter Umhang. Würdevoll und freundlich.'),
+    rede:()=>{flag('abt');say('Abt','Wido, mein Sohn. Im Kloster beten und arbeiten wir nach festen Regeln. Und lesen können wir hier – fast alle Bücher und Quellen stammen aus Klöstern. Vergiss das nicht, wenn du später Quellen liest!',[
+      {t:'Warum ist das wichtig?',next:()=>say('Abt','Weil nur wenige Menschen im Jahr 802 lesen und schreiben konnten – meist Mönche und Kleriker. Die Stimmen der Bauern fehlen uns deshalb oft. Darum liest man Quellen kritisch.',[{t:'Verstanden!',next:()=>{card('lesen');card('kloster');closeDlg();}}])},
+      {t:'Danke, Herr Abt.',next:()=>{card('kloster');closeDlg();}}
+    ]);}},
+  hartmut:{schaue:()=>narr('Bruder Hartmut. Blass, aber freundlich. Er liegt im Krankenbett und hat Fieber.'),
+    rede:()=>say('Bruder Hartmut','Oh... Wido... mein Bauch tut so weh... Brau mir bitte den Trank aus dem Arzneibuch. Salbei... Minze... Honig... in heißem Wasser... hust...',[{t:'Keine Sorge, Bruder Hartmut!',next:()=>{closeDlg();}}])}
+};
+const ANIMALHAND={
+  huhn:{schaue:()=>narr('Huhn Chlothilde pickt nach Körnern. Stolz wie ein kleiner Ritter.')},
+  ziege:{schaue:()=>{narr('Die Ziege kaut noch immer. Irgendwo liegt noch ein Stück Urbar in ihrem Maul.');bubble('ratold','Die frisst alles!');},
+         nimm:()=>bubble('wido','Eine Ziege mitnehmen? Nein danke.')},
+  elefant:{schaue:()=>{card('abulAbbas');flag('elefantSchau');narr('Abul Abbas, grau und riesig, wedelt mit den Ohren. Im Rüssel hält er eine Pergamentrolle!');},
+            nimm:()=>{if(has('rolle')){narr('Der Rüssel ist leer.');}else{give('rolle');flag('elefantRolle');sfx('plumps');narr('Geschickt hebst du die Pergamentrolle aus dem Rüssel des Elefanten. Abul Abbas trompetet leise zufrieden.');}}}
+};
+
+/* ================= 12. Kombinations-Paare (Rätselketten) ================= */
+const PAIRS={
+ /* Kapitel 1 */
+ 'schabeisen+pergament':()=>{ if(!has('schabeisen')||!has('pergament'))return narr(' Dafür brauchst du beides im Inventar.');
+   flag('pal');card('palimpsest');sfx('scrape');
+   narr('Du schabst die alte Schrift mit dem Schabeisen ab. Das Pergament ist jetzt glatt – ein Palimpsest. Darauf kannst du neu schreiben.');},
+ 'tinte+feder':()=>{ if(!has('tinte')||!has('feder'))return narr('Dafür brauchst du Tintenfass und Feder.');
+   take('tinte');take('feder');give('federT');sfx('scrape');
+   narr('Du tunkst die Feder ins Tintenfass. Sie saugt sich voll schwarzer Tinte.');},
+ 'federT+pergament':()=>{ if(!has('federT')||!has('pergament'))return narr('Dafür brauchst du die nasse Feder und Pergament.');
+   if(!F('pal'))return narr('Erst musst du das Pergament mit dem Schabeisen abschaben!');
+   if(!F('gisla'))return narr('Du weißt noch nicht, was Gisla schuldet. Rede mit ihr auf ihrer Hufe!');
+   take('federT');give('urbar');flag('urbar');card('urbar');sfx('write');
+   narr('Du schreibst das neue Urbar: „Gisla schuldet 2 Scheffel Korn, 1 Huhn, 3 Tage Fronarbeit.“ Saubere Schrift, Novize!');},
+ 'urbar+wache':(a,b)=>{ const isW=t=>(t.npc==='wache')||(t.id&&String(t.id).endsWith('npc:wache'));
+   const w=isW(b)?b:(isW(a)?a:null);
+   if(!w)return narr('Gib das Urbar wem?');
+   if(S.room!=='koenigshof')return narr('Der Königsbote ist am Königshof.');
+   if(!has('urbar'))return narr('Du hast noch kein neues Urbar geschrieben.');
+   take('urbar');flag('boten');sfx('success');
+   narr('Der Bote liest das Urbar, nickt zufrieden: „Gut gemacht, Wido!“ Die Königsboten ziehen weiter. Kapitel 1 geschafft!');
+   setTimeout(()=>endCh(1),1200);},
+ /* Kapitel 2 */
+ 'federE+rolle':()=>{ if(!has('federE')||!has('rolle'))return narr('Dafür brauchst du Einhards Feder und die Pergamentrolle.');
+   take('federE');take('rolle');give('bericht');flag('bericht');sfx('write');card('einhard');
+   narr('Mit Einhards Feder schreibst du den Reisebericht: „Abul Abbas, Elefant des Kalifen, ist in Aachen eingetroffen...“ Fertig!');},
+ 'bericht+karl':()=>{ if(S.room!=='thermen')return narr('Kaiser Karl badet in den warmen Bädern.');
+   if(!has('bericht'))return narr('Du hast noch keinen Reisebericht.');
+   take('bericht');flag('karlDone');sfx('success');
+   narr('Karl liest den Bericht im warmen Wasser, lacht und sagt: „Ein Elefant! In Aachen! Schreib das in die Annalen, Einhard!“ Kapitel 2 geschafft!');
+   setTimeout(()=>endCh(2),1200);},
+ /* Kapitel 3 */
+ 'silber+amboss':()=>{ if(!has('silber'))return narr('Du brauchst den Silberklumpen.');
+   if(!S.room||!findH(S.room+':amboss'))return narr('Der Amboss steht in der Münzwerkstatt.');
+   take('silber');give('platte');sfx('hammer');narr('Klong! Du hämmert den Silberklumpen auf dem Amboss zu einer dünnen Platte.');},
+ 'platte+stempel':()=>{ if(!has('platte'))return narr('Du brauchst die Silberplatte.');
+   take('platte');give('beutel');flag('beutel');sfx('coin');card('denar');
+   narr('Klong klong! Aus der Platte werden zwölf glänzende Denare – spiegelverkehrt geprägt, richtig herum geprägt. Ein Beutel voll Silber!');},
+ 'beutel+wibrand':()=>{ if(!has('beutel'))return narr('Du hast keinen Beutel Denare.');
+   if(S.room!=='markt')return narr('Wibrand steht auf dem Markt von Dorestad.');
+   take('beutel');give('maentel');flag('maentel');sfx('coin');card('handel');
+   narr('Wibrand wiegt die Denare, nickt und rollt drei blau-goldene Mäntel zusammen: „Für den Kalifen! Gute Reise!“');},
+ 'maentel+ketil':()=>{ if(!has('maentel'))return narr('Du hast keine Mäntel.');
+   if(S.room!=='kai')return narr('Ketil wartet am Kai.');
+   take('maentel');flag('ketilDone');sfx('success');
+   narr('Ketil lädt die Mäntel auf sein Schiff: „Bagdad, wir kommen!“ Die Segel blähen sich im Wind. Jetzt noch den Zoll...');},
+ 'denare+zollner':()=>{ if(!has('denare'))return narr('Du hast keine Denare mehr.');
+   if(S.room!=='kai')return narr('Der Zöllner steht am Kai.');
+   take('denare');flag('zollPaid');sfx('coin');
+   narr('Der Zöllner klimpert mit den zwei Denaren: „Zoll bezahlt – gute Fahrt!“ Er stempelt die Ladung ab.');
+   if(F('ketilDone'))setTimeout(()=>{narr('Alles erledigt: Mäntel an Bord, Zoll bezahlt. Kapitel 3 geschafft!');endCh(3);},1200);},
+ /* Kapitel 4 */
+ 'salbei+kessel':()=>{ if(!has('salbei'))return narr('Du brauchst Salbei.');
+   if(S.room!=='kueche')return narr('Der Kessel hängt am Herd in der Küche.');
+   flag('sal');take('salbei');sfx('splash');narr('Der Salbei landet im kochenden Wasser. Es duftet herb.');
+   if(F('sal')&&F('min')&&F('hon'))makeTrank();},
+ 'minze+kessel':()=>{ if(!has('minze'))return narr('Du brauchst Minze.');
+   if(S.room!=='kueche')return narr('Der Kessel hängt am Herd in der Küche.');
+   flag('min');take('minze');sfx('splash');narr('Die Minze sizzelt im Kessel.');
+   if(F('sal')&&F('min')&&F('hon'))makeTrank();},
+ 'honig+kessel':()=>{ if(!has('honig'))return narr('Du brauchst die Honigwabe.');
+   if(S.room!=='kueche')return narr('Der Kessel hängt am Herd in der Küche.');
+   flag('hon');take('honig');sfx('splash');narr('Der Honig löst sich im heißen Wasser auf. Süßer Duft!');
+   if(F('sal')&&F('min')&&F('hon'))makeTrank();},
+ 'trank+hartmut':()=>{ if(!has('trank'))return narr('Du hast noch keinen Heiltrank gebraut.');
+   if(S.room!=='infirmarium')return narr('Bruder Hartmut liegt im Infirmarium.');
+   take('trank');flag('hartmutDone');sfx('success');card('lesen');
+   narr('Hartmut trinkt den Trank, seufzt und lächelt: „Ah... besser... danke, Wido!“ Kapitel 4 geschafft!');
+   setTimeout(()=>endCh(4),1400);}
+};
+function makeTrank(){flag('trank');give('trank');sfx('success');card('arzneibuch');
+  narr('Salbei, Minze und Honig im heißen Wasser – der Heiltrank ist fertig! Er schimmert grünlich-gold.');}
+
+/* ================= 13. Hinweise ================= */
+const HINTS={
+ 1:()=>{ if(!has('pergament')||!has('schabeisen')||!has('tinte')||!has('feder'))return 'Im Skriptorium: Nimm Pergament, Schabeisen, Tintenfass und Feder am Pult.';
+   if(!F('pal'))return 'Benutze das Schabeisen mit dem Pergament (abschaben = Palimpsest).';
+   if(!has('federT'))return 'Benutze das Tintenfass mit der Feder.';
+   if(!F('gisla'))return 'Gehe zum Königshof und dann rechts zu Gislas Hufe: Rede mit Gisla (ihre Abgaben fürs Urbar).';
+   if(!F('urbar'))return 'Zurück im Skriptorium: Benutze die nasse Feder mit dem Pergament → neues Urbar.';
+   return 'Gib das neue Urbar an die Wache (Königsbote) am Königshof.';},
+ 2:()=>{ if(!F('isaak'))return 'In der Pfalz Aachen: Rede mit Isaak.';
+   if(!has('rolle'))return 'Schau an den Elefanten Abul Abbas und nimm die Pergamentrolle aus seinem Rüssel.';
+   if(!has('federE'))return 'In der Pfalzkapelle: Rede mit Einhard und nimm seine Feder vom Pult.';
+   if(!F('bericht'))return 'Benutze Einhards Feder mit der Pergamentrolle → Reisebericht.';
+   return 'Gehe zu den warmen Bädern und gib den Reisebericht an Kaiser Karl.';},
+ 3:()=>{ if(!F('ketil'))return 'Am Kai: Rede mit Ketil (Auftrag: 3 friesische Mäntel für den Kalifen).';
+   if(!F('wibrand'))return 'Auf dem Markt: Rede mit Wibrand (Preis: 12 Denare) und mit dem Zöllner am Kai (Zoll: 2 Denare).';
+   if(!has('silber'))return 'In der Münzwerkstatt: Nimm den Silberklumpen beim Tisch.';
+   if(!has('platte'))return 'Benutze den Silberklumpen mit dem Amboss.';
+   if(!has('beutel'))return 'Benutze die Silberplatte mit dem Münzstempel (spiegelverkehrt!).';
+   if(!has('maentel'))return 'Gib den Beutel mit 12 Denaren an Wibrand auf dem Markt.';
+   if(!F('ketilDone'))return 'Gib die 3 Mäntel an Ketil am Kai.';
+   return 'Gib deine 2 Denare an den Zöllner am Kai (Zoll bezahlen).';},
+ 4:()=>{ if(!F('rezept'))return 'Im Infirmarium: Schau an das Lorscher Arzneibuch am Lesepult (Rezept lesen).';
+   if(!has('salbei'))return 'Im Klostergarten: Nimm Salbei aus dem ersten Beet.';
+   if(!has('minze'))return 'Im Klostergarten: Nimm Minze aus dem zweiten Beet.';
+   if(!has('honig'))return 'Im Klostergarten: Nimm die Honigwabe am Bienenkorb.';
+   if(!F('trank'))return 'In der Klosterküche: Benutze Salbei, Minze und Honig mit dem Kessel am Herd.';
+   return 'Gib den Heiltrank an Bruder Hartmut im Infirmarium.';}
+};
+/* ================= 14. Ton (WebAudio-Chiptune) ================= */
+let ac=null,loopTimer=null,loopKey=null,stepIx=0,nextT=0;
+function noteF(m){return 440*Math.pow(2,(m-69)/12);}
+function ensureAC(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){ac=null;}}if(ac&&ac.state==='suspended')ac.resume();}
+function blip(f,t0,dur,type,vol){
+  if(!ac)return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.linearRampToValueAtTime(vol,t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g);g.connect(ac.destination);
+  o.start(t0);o.stop(t0+dur+0.03);
+}
+const LOOPS={
+  hof:{bpm:132,pat:[[76,.5,48],[79,.5,48],[81,1,45],[79,.5,48],[76,.5,43],[74,.5,45],[72,1,48],[0,1,0],[76,.5,48],[79,.5,48],[83,1,50],[81,.5,48],[79,.5,45],[76,.5,43],[74,2,41],[0,.5,0]]},
+  hufe:{bpm:112,pat:[[69,.5,45],[72,.5,45],[74,1,41],[72,.5,45],[69,.5,43],[67,.5,40],[69,1,45],[0,1,0],[71,.5,47],[74,.5,47],[76,1,43],[74,.5,47],[72,.5,45],[69,.5,43],[67,2,40],[0,.5,0]]},
+  pfalz:{bpm:100,pat:[[69,1,45],[72,1,48],[76,1,52],[74,.5,48],[72,.5,45],[69,1,41],[67,.5,43],[69,1.5,45],[0,.5,0],[69,1,45],[72,1,48],[81,2,52],[79,1,50],[76,.5,48],[74,.5,45],[72,2,41],[0,1,0]]},
+  therme:{bpm:84,pat:[[69,.75,45],[0,.25,0],[72,1,48],[0,.5,0],[74,1,50],[0,.5,0],[72,.75,48],[71,.25,47],[69,1.5,45],[0,.5,0]]},
+  hafen:{bpm:120,pat:[[74,.5,50],[74,.5,50],[77,.5,50],[76,.5,48],[74,1,50],[72,.5,48],[69,.5,45],[71,1,47],[74,.5,50],[74,.5,50],[77,.5,50],[79,1,53],[77,.5,50],[76,.5,48],[74,2,50],[0,.5,0]]},
+  kloster:{bpm:88,pat:[[69,1,45],[67,1,43],[64,1,40],[67,1,43],[69,2,45],[0,1,0],[72,1,48],[69,.5,45],[67,.5,43],[64,1.5,40],[0,.5,0]]},
+  garten:{bpm:116,pat:[[72,.5,48],[76,.5,52],[79,.5,48],[76,.5,52],[74,.5,48],[72,.5,45],[74,1,48],[0,.5,0],[76,.5,52],[79,.5,55],[81,.5,52],[79,.5,50],[76,2,48],[0,.5,0]]}
+};
+const LOOPMAP={skriptorium:'kloster',infirmarium:'kloster',kueche:'kloster',garten:'garten',koenigshof:'hof',gislasHufe:'hufe',pfalzAachen:'pfalz',pfalzKapelle:'pfalz',thermen:'therme',kai:'hafen',markt:'hafen',muenzwerkstatt:'hafen'};
+function startLoop(key){
+  stopLoop();
+  if(!save.sound)return;
+  ensureAC();if(!ac)return;
+  loopKey=key;stepIx=0;nextT=ac.currentTime+0.08;
+  loopTimer=setInterval(()=>{
+    if(!ac||!save.sound)return;
+    const L=LOOPS[loopKey];if(!L)return;
+    while(nextT<ac.currentTime+0.35){
+      const p=L.pat[stepIx],spb=60/L.bpm;
+      if(p[0])blip(noteF(p[0]),nextT,p[1]*spb*0.92,'square',0.045);
+      if(p[2])blip(noteF(p[2]),nextT,p[1]*spb,'triangle',0.055);
+      nextT+=p[1]*spb;stepIx=(stepIx+1)%L.pat.length;
+    }
+  },110);
+}
+function stopLoop(){if(loopTimer){clearInterval(loopTimer);loopTimer=null;}}
+function sfx(name){
+  if(!save.sound)return;
+  ensureAC();if(!ac)return;
+  const t=ac.currentTime;
+  switch(name){
+    case 'scrape': for(let i=0;i<6;i++)blip(320-i*34,t+i*0.05,0.05,'square',0.05);break;
+    case 'plumps': blip(150,t,0.16,'sine',0.12);blip(72,t+0.06,0.24,'sine',0.12);break;
+    case 'thump': blip(90,t,0.16,'sine',0.12);break;
+    case 'klimper': blip(1320,t,0.08,'triangle',0.07);blip(1760,t+0.07,0.14,'triangle',0.06);break;
+    case 'clink': blip(2093,t,0.06,'square',0.05);blip(1568,t+0.05,0.09,'square',0.05);break;
+    case 'coin': blip(988,t,0.07,'triangle',0.08);blip(1319,t+0.08,0.16,'triangle',0.08);break;
+    case 'splash': for(let i=0;i<5;i++)blip(620-i*95,t+i*0.04,0.06,'square',0.05);break;
+    case 'hammer': blip(220,t,0.08,'square',0.10);blip(160,t+0.02,0.10,'square',0.08);blip(220,t+0.15,0.08,'square',0.09);break;
+    case 'write': for(let i=0;i<8;i++)blip(850+((i*137)%400),t+i*0.03,0.03,'square',0.028);break;
+    case 'hum': blip(220,t,0.3,'sawtooth',0.03);blip(330,t+0.1,0.25,'sawtooth',0.02);break;
+    case 'success': [523,659,784,1047].forEach((f,i)=>blip(f,t+i*0.09,0.15,'square',0.06));break;
+  }
+}
+
+/* ================= 15. Boot ================= */
+function boot(){
+  wireUI();
+  updateSoundBtn();
+  renderMenu();
+  show('menu');
+  setLoc();
+  initParts();
+  document.addEventListener('pointerdown',()=>{ensureAC();if(save.sound&&!loopTimer)startLoop(LOOPMAP[S.room]||'kloster');});
+  requestAnimationFrame(frame);
+}
+boot();
+</script>
+</body>
+</html>
